@@ -1,1261 +1,453 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Wetter</title>
-    
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Uhrzeit</title>
+  
     <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#60a5fa">
+    <meta name="theme-color" content="#8b5cf6">
     <link rel="apple-touch-icon" href="icon-192.png">
 
-    <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        @import url('https://fonts.fonts.googleapis.com/css2?family=Inter:wght@400;700;800;900&display=swap');
-        body {
-            font-family: 'Inter', sans-serif;
-        }
-        /* Custom styles for the scrollbar to make it look clean */
-        .hourly-scroll-container::-webkit-scrollbar {
-            height: 8px;
-        }
-        .hourly-scroll-container::-webkit-scrollbar-track {
-            background: #f1f1f1;
-            border-radius: 4px;
-        }
-        .hourly-scroll-container::-webkit-scrollbar-thumb {
-            background: #888;
-            border-radius: 4px;
-        }
-        .hourly-scroll-container::-webkit-scrollbar-thumb:hover {
-            background: #555;
-        }
-        .popup-overlay {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.5);
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-        }
-        .popup-content {
-            background-color: white;
-            padding: 24px;
-            border-radius: 12px;
-            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
-            width: 90%;
-            max-width: 900px;
-            max-height: 90vh;
-            overflow-y: auto;
-            position: relative;
-        }
-        .close-btn {
-            position: absolute;
-            top: 8px;
-            right: 12px;
-            font-size: 24px;
-            cursor: pointer;
-            color: #4a5568;
-        }
-        /* Styles for weather alerts */
-        .alert-level-Moderate { background-color: #facc15; }
-        .alert-level-Severe { background-color: #b91c1c; }
-        .alert-level-Extrem { background-color: #9333ea; }
+    <link rel="icon" type="image/x-icon" href="./favicon.ico"> 
+    <link rel="icon" type="image/x-icon" href="favicon.ico"> 
 
-        /* Custom style for the delete button */
-        .delete-btn {
-            background: none;
-            border: none;
-            font-size: 1.2rem;
-            color: #ef4444;
-            cursor: pointer;
-            transition: color 0.3s ease;
-        }
-        .delete-btn:hover {
-            color: #b91c1c;
-        }
-        .suggestions-container {
-            max-height: 320px;
-            overflow-y: auto;
-            list-style: none;
-            padding: 0;
-            margin-top: 8px;
-            background-color: white;
-            border: 1px solid #e2e8f0;
-            border-radius: 8px;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-        }
-        .suggestion-item {
-            padding: 12px;
-            cursor: pointer;
-            transition: background-color 0.2s ease-in-out;
-            background-color: #ffffff;
-        }
-        .suggestion-item:hover {
-            background-color: #f1f5f9;
-        }
-        .suggestion-item:not(:last-child) {
-            border-bottom: 1px solid #e2e8f0;
-        }
-        .suggestion-item span.font-semibold {
-            color: #1a202c;
-        }
-        .suggestion-item span.text-gray-500 {
-            font-size: 0.875rem;
-            color: #4a5568;
-        }
-
-        /* Set vertical alignment for table cells to top by default */
-        .responsive-table td {
-            vertical-align: top;
-        }
-
-        /* Responsive table styles */
-        @media (max-width: 768px) {
-            .responsive-table table,
-            .responsive-table thead,
-            .responsive-table tbody,
-            .responsive-table th,
-            .responsive-table td,
-            .responsive-table tr {
-                display: block;
-            }
-
-            .responsive-table thead tr {
-                position: absolute;
-                top: -9999px;
-                left: -9999px;
-            }
-
-            .responsive-table tr {
-                border: 1px solid #ccc;
-                border-radius: 8px;
-                margin-bottom: 0.5em; 
-            }
-            
-            /* Sehr kompakter vertikaler Abstand */
-            .responsive-table td {
-                border: none;
-                border-bottom: 1px solid #eee;
-                position: relative;
-                padding: 0.1rem 0.5rem; 
-                text-align: left;
-                min-height: auto;
-                display: block; 
-            }
-            
-            /* Minimaler Abstand zwischen Label und Inhalt */
-            .responsive-table td:before {
-                display: block; 
-                content: attr(data-label);
-                font-weight: bold;
-                text-align: left;
-                margin-bottom: 0; 
-                color: #374151;
-            }
-
-            .responsive-table td:last-child {
-                border-bottom: 0;
-            }
-        }
-    </style>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;800&family=JetBrains+Mono:wght@400;700&display=swap');
+    body {
+      font-family: 'Inter', sans-serif;
+    }
+    .modal-backdrop {
+        background-color: rgba(0, 0, 0, 0.5);
+    }
+    .tabular-nums {
+        font-variant-numeric: tabular-nums;
+    }
+  </style>
 </head>
-<body class="bg-gradient-to-br from-blue-400 to-purple-600 min-h-screen flex flex-col items-center p-4">
-    <div class="bg-white pt-8 px-4 pb-8 rounded-xl shadow-2xl text-center max-w-lg w-full mb-8">
-        <h1 id="weatherLocation" class="text-4xl md:text-5xl font-extrabold text-gray-800 mb-2 cursor-pointer hover:text-blue-600">
-            
-        </h1>
+<body class="bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 min-h-screen flex flex-col p-4">
 
-        <div class="relative">
-            <div id="searchView" class="absolute inset-0 flex flex-col items-center justify-center bg-white z-10 opacity-0 pointer-events-none">
-                <button id="closeSearchBtn" class="absolute top-0 right-2 text-3xl text-gray-500 hover:text-gray-800">×</button>
-                <div id="searchContainer" class="mb-6 flex flex-col sm:flex-row items-center justify-center space-y-4 sm:space-y-0 sm:space-x-4 w-full relative">
-                    <input type="text" id="cityInput" placeholder="Stadt eingeben..." class="p-3 border border-gray-300 rounded-full w-full sm:w-auto flex-grow focus:outline-none focus:ring-2 focus:ring-blue-500">
-                    <div id="suggestionsContainer" class="suggestions-container absolute top-full left-0 right-0 z-20 hidden"></div>
-                    <button id="searchBtn" class="p-3 bg-blue-500 text-white rounded-full shadow-lg hover:bg-blue-600 w-full sm:w-auto">
-                        Suchen
-                    </button>
-                </div>
-                
-                <button id="recentCitiesBtn" class="p-3 bg-gray-200 text-gray-700 rounded-full shadow-lg hover:bg-gray-300 mb-4 w-full sm:w-auto">
-                    Gespeicherte Städte
-                </button>
-                
-                <div id="coordinateInfo" class="text-sm text-gray-500 mb-4">
-                    <p id="searchCoords"></p>
-                </div>
-            </div>
+  <div class="flex flex-col items-center space-y-6 w-full mt-8">
+    
+    <div class="flex flex-col items-center space-y-4 w-full">
 
-            <div id="weatherDisplay">
-                <div class="flex items-center justify-between mb-8 h-16">
-                    <button id="prevDayBtn" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-full shadow-lg hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0">
-                        &lt;
-                    </button>
-
-                    <div class="flex-grow flex flex-col items-center justify-center">
-                        <span id="currentDateDisplay" class="text-xl font-semibold text-gray-800">
-                            Heute
-                        </span>
-                        <span id="lastUpdated" class="text-xs text-gray-500 mt-1"></span>
-                        <span id="dataValidFrom" class="text-xs text-gray-500 mt-1"></span>
-                    </div>
-
-                    <button id="nextDayBtn" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-full shadow-lg hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0">
-                        &gt;
-                    </button>
-                </div>
-
-                <div id="dailySummaryContainer" class="relative flex flex-col items-center justify-center mb-8 min-h-48">
-                    <p id="summaryStatus" class="text-gray-600 mb-4">Wetterdaten werden geladen...</p>
-                    
-                    <div id="mainSummaryRow" class="flex items-center justify-center w-full">
-                        <div id="summaryData" class="hidden flex-grow flex-col items-center">
-                            <div class="flex items-center justify-center mb-4">
-                                <div class="flex items-center space-x-4">
-                                    <p id="dailyIconContainer" class="text-5xl flex-shrink-0"></p>
-                                    <p id="dailyTempRange" class="text-3xl font-bold text-indigo-700 flex-shrink-0"></p>
-                                </div>
-                                <div id="single-alert-container" class="ml-4 flex-shrink-0"></div>
-                            </div>
-                            <p id="dailyDesc" class="text-lg text-gray-700 capitalize"></p>
-                            <div id="dailyDetails" class="text-sm text-gray-500 mt-2 text-center"></div>
-                        </div>
-                    </div>
-                    
-                    <p id="weatherError" class="hidden text-red-600 mb-4"></p>
-                </div>
-                
-                <div id="hourlyForecastContainer" class="h-48 overflow-x-auto flex space-x-2 justify-start hourly-scroll-container pb-4 px-1 opacity-0">
-                </div>
-            </div>
+      <div class="bg-white/10 backdrop-blur-sm rounded-xl p-6 shadow-lg flex flex-col items-center w-full max-w-sm md:max-w-lg">
+        <h2 class="text-xl font-bold text-white opacity-80 text-center mb-2">Lokale Zeit</h2>
+        <div id="local-clock-de" class="flex items-center justify-center text-6xl sm:text-7xl md:text-8xl font-extrabold font-mono tracking-wide text-white w-full tabular-nums">
         </div>
+      </div>
+      
+      <div class="flex flex-col items-center bg-white/10 backdrop-blur-sm rounded-xl p-6 shadow-lg w-full max-w-sm md:max-w-lg">
+        <h2 id="selected-city-title" class="text-xl font-bold text-white opacity-80 text-center mb-2">Ausgewählte Zeit</h2>
+        <div id="clock" class="flex flex-col items-center justify-center text-6xl sm:text-7xl md:text-8xl font-extrabold font-mono tracking-wide text-white tabular-nums">
+          </div>
+        <div id="time-difference-display" class="mt-2 text-base sm:text-lg md:text-xl font-light tracking-wide text-center text-white opacity-80">
+        </div>
+        <div id="data-status-info" class="mt-2 text-[10px] text-white/50 italic"></div>
+      </div>
+      
+      <div class="bg-white/10 backdrop-blur-sm rounded-xl p-6 shadow-lg">
+        <h2 class="text-xl font-bold text-white opacity-80 text-center mb-2">Datum</h2>
+        <div id="date-display" class="text-xl sm:text-2xl md:text-3xl font-light tracking-wide text-center text-white opacity-80 tabular-nums">
+        </div>
+      </div>
     </div>
 
-    <div id="windPopup" class="popup-overlay">
-        <div class="popup-content max-w-2xl responsive-table">
-            <span class="close-btn">×</span>
-            
-            <table class="table-fixed w-full text-sm text-left text-gray-500">
-                <thead class="text-xs text-gray-700 uppercase bg-gray-50">
-                    <tr>
-                        <th scope="col" class="px-2 py-1 w-3/12">km/h (m/s)</th>
-                        <th scope="col" class="px-2 py-1 w-4/12">Bezeichnung</th>
-                        <th scope="col" class="px-2 py-1 w-5/12">Beispiele</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr class="bg-green-100 border-b">
-                        <td data-label="km/h (m/s)" class="px-2 py-1"><span class="font-bold">&lt; 1</span> <span class="text-gray-500">(0 - 0,2)</span></td>
-                        <td data-label="Bezeichnung" class="px-2 py-1">Windstille</td>
-                        <td data-label="Beispiele" class="px-2 py-1">Rauch steigt senkrecht auf</td>
-                    </tr>
-                    <tr class="bg-green-100 border-b">
-                        <td data-label="km/h (m/s)" class="px-2 py-1"><span class="font-bold">1 - 5</span> <span class="text-gray-500">(0,3 - 1,5)</span></td>
-                        <td data-label="Bezeichnung" class="px-2 py-1">leiser Zug</td>
-                        <td data-label="Beispiele" class="px-2 py-1">Windrichtung angezeigt durch den Rauch</td>
-                    </tr>
-                    <tr class="bg-green-100 border-b">
-                        <td data-label="km/h (m/s)" class="px-2 py-1"><span class="font-bold">6 - 11</span> <span class="text-gray-500">(1,6 - 3,3)</span></td>
-                        <td data-label="Bezeichnung" class="px-2 py-1">leichte Brise</td>
-                        <td data-label="Beispiele" class="px-2 py-1">Wind im Gesicht spürbar, Blätter bewegen sich</td>
-                    </tr>
-                    <tr class="bg-green-100 border-b">
-                        <td data-label="km/h (m/s)" class="px-2 py-1"><span class="font-bold">12 - 19</span> <span class="text-gray-500">(3,4 - 5,4)</span></td>
-                        <td data-label="Bezeichnung" class="px-2 py-1">schwache Brise</td>
-                        <td data-label="Beispiele" class="px-2 py-1">Wind bewegt dünne Zweige</td>
-                    </tr>
-                    <tr class="bg-green-100 border-b">
-                        <td data-label="km/h (m/s)" class="px-2 py-1"><span class="font-bold">20 - 28</span> <span class="text-gray-500">(5,5 - 7,9)</span></td>
-                        <td data-label="Bezeichnung" class="px-2 py-1">mäßige Brise</td>
-                        <td data-label="Beispiele" class="px-2 py-1">Wind bewegt Zweige und dünnere Äste, loses Papier</td>
-                    </tr>
-                    <tr class="bg-green-100 border-b">
-                        <td data-label="km/h (m/s)" class="px-2 py-1"><span class="font-bold">29 - 38</span> <span class="text-gray-500">(8,0 - 10,7)</span></td>
-                        <td data-label="Bezeichnung" class="px-2 py-1">frische Brise</td>
-                        <td data-label="Beispiele" class="px-2 py-1">kleine Laubbäume beginnen zu schwanken</td>
-                    </tr>
-                    <tr class="bg-green-100 border-b">
-                        <td data-label="km/h (m/s)" class="px-2 py-1"><span class="font-bold">39 - 49</span> <span class="text-gray-500">(10,8 - 13,8)</span></td>
-                        <td data-label="Bezeichnung" class="px-2 py-1">starker Wind</td>
-                        <td data-label="Beispiele" class="px-2 py-1">starke Äste schwanken, Regenschirme sind schwer zu halten</td>
-                    </tr>
-                    <tr class="bg-green-100 border-b">
-                        <td data-label="km/h (m/s)" class="px-2 py-1"><span class="font-bold">50 - 61</span> <span class="text-gray-500">(13,9 - 17,1)</span></td>
-                        <td data-label="Bezeichnung" class="px-2 py-1">steifer Wind</td>
-                        <td data-label="Beispiele" class="px-2 py-1">Hemmungen beim Gehen, Bäume bewegen sich</td>
-                    </tr>
-                    <tr class="bg-yellow-100 border-b">
-                        <td data-label="km/h (m/s)" class="px-2 py-1"><span class="font-bold">62 - 74</span> <span class="text-gray-500">(17,2 - 20,7)</span></td>
-                        <td data-label="Bezeichnung" class="px-2 py-1">Stürmischer Wind</td>
-                        <td data-label="Beispiele" class="px-2 py-1">Zweige brechen von Bäumen, erschwert erheblich das Gehen</td>
-                    </tr>
-                    <tr class="bg-yellow-100 border-b">
-                        <td data-label="km/h (m/s)" class="px-2 py-1"><span class="font-bold">75 - 88</span> <span class="text-gray-500">(20,8 - 24,4)</span></td>
-                        <td data-label="Bezeichnung" class="px-2 py-1">Sturm</td>
-                        <td data-label="Beispiele" class="px-2 py-1">Äste brechen von Bäumen, kleinere Schäden an Häusern</td>
-                    </tr>
-                    <tr class="bg-red-100 border-b">
-                        <td data-label="km/h (m/s)" class="px-2 py-1"><span class="font-bold">89 - 102</span> <span class="text-gray-500">(24,5 - 28,4)</span></td>
-                        <td data-label="Bezeichnung" class="px-2 py-1">schwerer Sturm</td>
-                        <td data-label="Beispiele" class="px-2 py-1">Wind bricht Bäume, größere Schäden an Häusern</td>
-                    </tr>
-                    <tr class="bg-red-100 border-b">
-                        <td data-label="km/h (m/s)" class="px-2 py-1"><span class="font-bold">103 - 117</span> <span class="text-gray-500">(28,5 - 32,6)</span></td>
-                        <td data-label="Bezeichnung" class="px-2 py-1">orkanartiger Sturm</td>
-                        <td data-label="Beispiele" class="px-2 py-1">Wind entwurzelt Bäume, verbreitet Sturmschäden</td>
-                    </tr>
-                    <tr class="bg-purple-100">
-                        <td data-label="km/h (m/s)" class="px-2 py-1"><span class="font-bold">ab 118</span> <span class="text-gray-500">(ab 32,7)</span></td>
-                        <td data-label="Bezeichnung" class="px-2 py-1">Orkan</td>
-                        <td data-label="Beispiele" class="px-2 py-1">schwere Verwüstungen</td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
+    <div>
+        <button id="timezone-selector-button" class="text-white p-3 rounded-full bg-white/20 hover:bg-white/30 transition-colors duration-200 flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-white/50">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m0 0a9 9 0 019-9m-9 9a9 9 0 009 9" />
+            </svg>
+        </button>
     </div>
-
-    <div id="rainPopup" class="popup-overlay">
-        <div class="popup-content max-w-xl responsive-table"> 
-            <span class="close-btn">×</span>
-            
-            <table class="table-auto w-full text-sm text-left text-gray-500">
-                <thead class="text-xs text-gray-700 uppercase bg-gray-50">
-                    <tr>
-                        <th scope="col" class="px-2 py-1">pro h / 24 h (mm)</th> 
-                        <th scope="col" class="px-2 py-1">Kategorie</th>
-                        <th scope="col" class="px-2 py-1">Auswirkungen</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr class="bg-green-100 border-b">
-                        <td data-label="pro h / 24 h (mm)" class="px-2 py-1">&lt; 5 / &lt; 10</td>
-                        <td data-label="Kategorie" class="px-2 py-1">Leicht</td>
-                        <td data-label="Auswirkungen" class="px-2 py-1">Normaler Regen, ohne Beeinträchtigungen</td>
-                    </tr>
-                    <tr class="bg-yellow-100 border-b">
-                         <td data-label="pro h / 24 h (mm)" class="px-2 py-1">5 - 15 / 10 - 30</td>
-                        <td data-label="Kategorie" class="px-2 py-1">Mäßig</td>
-                        <td data-label="Auswirkungen" class="px-2 py-1">Deutlicher Regen, der Pfützen bildet</td>
-                    </tr>
-                    <tr class="bg-red-100 border-b">
-                         <td data-label="pro h / 24 h (mm)" class="px-2 py-1">15 - 25 / 30 - 50</td>
-                        <td data-label="Kategorie" class="px-2 py-1">Schwer</td>
-                        <td data-label="Auswirkungen" class="px-2 py-1">Starkregen: lokaler Wasserstandsanstieg, überflutete Straßen und Keller</td>
-                    </tr>
-                    <tr class="bg-red-100 border-b">
-                         <td data-label="pro h / 24 h (mm)" class="px-2 py-1">25 - 40 / 50 - 80</td>
-                        <td data-label="Kategorie" class="px-2 py-1">Unwetter</td>
-                        <td data-label="Auswirkungen" class="px-2 py-1">Starkregen: Überflutungen, vollgelaufene Keller und Unterführungen</td>
-                    </tr>
-                    <tr class="bg-purple-100">
-                         <td data-label="pro h / 24 h (mm)" class="px-2 py-1">&gt; 40 / &gt; 80</td>
-                        <td data-label="Kategorie" class="px-2 py-1">Extremes Unwetter</td>
-                        <td data-label="Auswirkungen" class="px-2 py-1">Starkregen: Lebensbedrohliche Situationen, massive Überflutungen</td>
-                    </tr>
-                </tbody>
-            </table>
-            <div class="flex justify-between text-xs text-gray-500 mt-4">
-                <p>Menge in mm</p>
-                <p>1mm = 1l/qm</p>
-            </div>
+    
+    <div id="timezone-modal" class="hidden fixed inset-0 flex items-center justify-center p-4 z-50 modal-backdrop">
+      <div class="bg-white/60 backdrop-blur-xl rounded-xl p-6 shadow-2xl flex flex-col space-y-4 max-h-[90vh] overflow-y-auto">
+        <h3 class="text-2xl font-bold text-black mb-2">Zeitzone</h3>
+        
+        <div>
+            <label for="searchable-cities-pulldown" class="block text-xl font-bold text-black text-center mb-2">Stadt wählen</label>
+            <select id="searchable-cities-pulldown" class="w-full p-2 text-lg text-black bg-white/50 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+            </select>
         </div>
+
+        <div id="modal-options-container" class="flex flex-col space-y-3 pt-4 border-t border-gray-400">
+          </div>
+
+        <button id="close-modal" class="mt-4 text-white text-lg px-4 py-2 rounded-lg bg-red-500/50 hover:bg-red-500/70 transition-colors duration-200">Schließen</button>
+      </div>
     </div>
+  </div>
 
-    <div id="alertPopup" class="popup-overlay">
-        <div class="popup-content max-w-xl">
-            <span class="close-btn">×</span>
-            <div class="flex items-center gap-3 mb-4">
-                <h2 id="alertPopupHeadline" class="text-2xl font-bold"></h2>
-                <button id="infoBtn" title="Info zu Schwellenwerten" class="flex-shrink-0 w-8 h-8 flex items-center justify-center bg-blue-100 text-blue-700 rounded-full font-bold text-lg hover:bg-blue-200 border border-blue-200 transition-colors">
-                    I
-                </button>
-            </div>
-            <p id="alertPopupDescription" class="text-base"></p>
-        </div>
-    </div>
-
-    <div id="thresholdsPopup" class="popup-overlay">
-        <div class="popup-content max-w-2xl">
-            <span class="close-btn">×</span>
-            <div class="flex items-center gap-3 mb-4">
-                <h2 class="text-2xl font-bold">Warnschwellenwerte</h2>
-                <button id="significantEventsBtn" title="Info zu signifikanten Ereignissen" class="flex-shrink-0 w-8 h-8 flex items-center justify-center bg-gray-200 text-gray-700 rounded-full font-bold text-lg hover:bg-gray-300 border border-gray-300 transition-colors">
-                    I
-                </button>
-            </div>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                
-                <div class="bg-gray-50 p-3 rounded-lg">
-                    <h4 class="font-bold mb-1">Wind und Windböen</h4>
-                    <p><span class="font-semibold text-yellow-600">Moderat:</span> &gt;= 62 km/h</p>
-                    <p><span class="font-semibold text-red-600">Schwer:</span> &gt;= 75 km/h</p>
-                    <p><span class="font-semibold text-purple-600">Extrem:</span> &gt;= 90 km/h</p>
-                </div>
-                
-                <div class="bg-gray-50 p-3 rounded-lg">
-                    <h4 class="font-bold mb-1">Starkregen pro Stunde</h4>
-                    <p><span class="font-semibold text-yellow-600">Moderat:</span> &gt;= 5 mm/h</p>
-                    <p><span class="font-semibold text-red-600">Schwer:</span> &gt;= 15 mm/h</p>
-                    <p><span class="font-semibold text-purple-600">Extrem:</span> &gt;= 40 mm/h</p>
-                </div>
-                
-                <div class="bg-gray-50 p-3 rounded-lg">
-                    <h4 class="font-bold mb-1">Starkregen Tagessumme</h4>
-                    <p><span class="font-semibold text-yellow-600">Moderat:</span> &gt;= 15 mm</p>
-                    <p><span class="font-semibold text-red-600">Schwer:</span> &gt;= 30 mm</p>
-                    <p><span class="font-semibold text-purple-600">Extrem:</span> &gt;= 80 mm</p>
-                </div>
-                
-                <div class="bg-gray-50 p-3 rounded-lg"> 
-                    <h4 class="font-bold mb-1 text-red-600">Gewitter</h4> 
-                    <ul class="list-disc list-inside text-left ml-2 mt-1">
-                        <li>Gewitter</li>
-                        <li>Gewitter mit leichtem Hagel</li>
-                        <li>Gewitter mit starkem Hagel</li>
-                    </ul>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div id="significantEventsPopup" class="popup-overlay">
-        <div class="popup-content max-xl">
-            <span class="close-btn">×</span>
-            <h2 class="text-2xl font-bold mb-4">Signifikante Ereignisse</h2>
-            <div class="space-y-6">
-                <div>
-                    <h3 class="text-xl font-semibold mb-2 border-b pb-1">Regenmengen innerhalb von 24 Stunden</h3>
-                    <table class="w-full text-left text-sm">
-                        <thead class="text-xs text-gray-700 uppercase bg-gray-50">
-                            <tr>
-                                <th class="px-2 py-1">Ereignis</th> 
-                                <th class="px-2 py-1">Regenmenge</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr class="border-b">
-                                <td class="px-2 py-1 font-medium">Aartal</td>
-                                <td class="px-2 py-1">100 l/qm</td>
-                            </tr>
-                            <tr class="border-b bg-gray-50">
-                                <td class="px-2 py-1 font-medium">Pfingsthochwasser</td>
-                                <td class="px-2 py-1">250 l/qm</td>
-                            </tr>
-                            <tr class="border-b">
-                                <td class="px-2 py-1 font-medium">Oderhochwasser</td>
-                                <td class="px-2 py-1">800 l/qm</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-                <div>
-                    <h3 class="text-xl font-semibold mb-2 border-b pb-1">Windgeschwindigkeiten</h3>
-                    <table class="w-full text-left text-sm">
-                         <thead class="text-xs text-gray-700 uppercase bg-gray-50">
-                            <tr>
-                                <th class="px-2 py-1">Ereignis</th>
-                                <th class="px-2 py-1">Geschwindigkeit</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr class="border-b">
-                                <td class="px-2 py-1 font-medium">Lothar</td>
-                                <td class="px-2 py-1">213 km/h</td>
-                            </tr>
-                            <tr class="border-b bg-gray-50">
-                                <td class="px-2 py-1 font-medium">Kyrill</td>
-                                <td class="px-2 py-1">225 km/h</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div id="recentCitiesPopup" class="popup-overlay">
-        <div class="popup-content max-w-sm p-6 text-center">
-            <span class="close-btn">×</span>
-            <h2 class="text-2xl font-bold mb-4">Gespeicherte Städte</h2>
-            <div id="recentCitiesList" class="flex flex-col space-y-2">
-            </div>
-            <p id="noRecentCities" class="text-gray-500 mt-4 hidden">Keine letzten Städte gefunden.</p>
-        </div>
-    </div>
-
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            
-            // PWA: Service Worker Registrierung
-            if ('serviceWorker' in navigator) {
-                window.addEventListener('load', () => {
-                    navigator.serviceWorker.register('sw.js')
-                        .then(reg => console.log('Service Worker registriert'))
-                        .catch(err => console.log('Service Worker Fehler', err));
-                });
-            }
-
-            // DOM-Elemente
-            const cityInputEl = document.getElementById('cityInput');
-            const searchBtnEl = document.getElementById('searchBtn');
-            const closeSearchBtn = document.getElementById('closeSearchBtn');
-            const recentCitiesBtn = document.getElementById('recentCitiesBtn');
-            const weatherLocationEl = document.getElementById('weatherLocation');
-            const searchViewEl = document.getElementById('searchView');
-            const summaryStatusEl = document.getElementById('summaryStatus');
-            const dailySummaryContainerEl = document.getElementById('dailySummaryContainer');
-            const summaryDataEl = document.getElementById('summaryData');
-            const dailyIconContainerEl = document.getElementById('dailyIconContainer');
-            const dailyTempRangeEl = document.getElementById('dailyTempRange');
-            const dailyDescEl = document.getElementById('dailyDesc');
-            const dailyDetailsEl = document.getElementById('dailyDetails');
-            const hourlyForecastContainerEl = document.getElementById('hourlyForecastContainer');
-            const weatherErrorEl = document.getElementById('weatherError');
-            const prevDayBtn = document.getElementById('prevDayBtn');
-            const nextDayBtn = document.getElementById('nextDayBtn');
-            const currentDateDisplayEl = document.getElementById('currentDateDisplay');
-            const weatherDisplayEl = document.getElementById('weatherDisplay');
-            const lastUpdatedEl = document.getElementById('lastUpdated');
-            const dataValidFromEl = document.getElementById('dataValidFrom'); 
-            
-            const windPopup = document.getElementById('windPopup');
-            const rainPopup = document.getElementById('rainPopup');
-            const alertPopup = document.getElementById('alertPopup');
-            const thresholdsPopup = document.getElementById('thresholdsPopup');
-            const infoBtn = document.getElementById('infoBtn');
-            const significantEventsPopup = document.getElementById('significantEventsPopup');
-            const significantEventsBtn = document.getElementById('significantEventsBtn');
-            const recentCitiesPopup = document.getElementById('recentCitiesPopup');
-            const recentCitiesListEl = document.getElementById('recentCitiesList');
-            const noRecentCitiesEl = document.getElementById('noRecentCities');
-            const searchCoordsEl = document.getElementById('searchCoords');
-            const suggestionsContainerEl = document.getElementById('suggestionsContainer');
-
-            const singleAlertContainer = document.getElementById('single-alert-container');
-
-            let dailyForecasts = [];
-            let dailyDataGlobal = {};
-            let currentDayIndex = 0;
-            let lastLocationData = null;
-            const STADTBERGEN_NAME = 'Stadtbergen';
-            const LAST_CITY_KEY = 'lastCity';
-            const RECENT_CITIES_KEY = 'recentCities';
-            
-            const permanentCities = [
-                { name: "Stadtbergen", lat: 48.371944, lon: 10.843611, country: "Deutschland", admin1: "Bayern", isPermanent: true }
-            ];
-            
-            function openPopup(popupId) {
-                document.getElementById(popupId).style.display = 'flex';
-            }
-
-            function closePopups() {
-                const popups = document.querySelectorAll('.popup-overlay');
-                popups.forEach(popup => {
-                    popup.style.display = 'none';
-                });
-            }
-
-            document.querySelectorAll('.close-btn, .popup-content').forEach(element => {
-                element.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                });
-            });
-            
-            document.querySelectorAll('.popup-overlay, .close-btn').forEach(overlay => {
-                overlay.addEventListener('click', closePopups);
-            });
-
-            infoBtn.addEventListener('click', () => {
-                const alertPopup = document.getElementById('alertPopup');
-                if (alertPopup) {
-                    alertPopup.style.display = 'none';
-                }
-                openPopup('thresholdsPopup');
-            });
-
-            significantEventsBtn.addEventListener('click', () => {
-                const thresholdsPopup = document.getElementById('thresholdsPopup');
-                if (thresholdsPopup) {
-                    thresholdsPopup.style.display = 'none';
-                }
-                openPopup('significantEventsPopup');
-            });
-
-            function getWeatherEmoji(wmoCode) {
-                const emojiMap = {
-                    0: '☀️', 1: '🌤️', 2: '⛅', 3: '☁️', 45: '🌫️', 48: '🌫️',
-                    51: '🌧️', 53: '🌧️', 55: '🌧️', 56: '🧊🌧️', 57: '🧊🌧️',
-                    61: '🌦️', 63: '🌧️', 65: '⛈️', 66: '🌨️', 67: '🌨️',
-                    71: '🌨️', 73: '🌨️', 75: '🌨️', 77: '❄️',
-                    80: '🌦️', 81: '🌧️', 82: '⛈️', 85: '🌨️', 86: '🌨️',
-                    95: '🌩️', 96: '⛈️', 99: '⛈️', 'error': '❓'
-                };
-                return emojiMap[wmoCode] || emojiMap.error;
-            }
-
-            function getWeatherDescription(wmoCode) {
-                const descriptionMap = {
-                    0: 'Klarer Himmel', 1: 'Meist klar', 2: 'Teilweise bewölkt', 3: 'Bedeckt',
-                    45: 'Nebel', 48: 'Reifnebel', 51: 'Leichter Nieselregen', 53: 'Mäßiger Nieselregen',
-                    55: 'Dichter Nieselregen', 56: 'Leichter gefrierender Nieselregen', 57: 'Dichter gefrierender Nieselregen',
-                    61: 'Leichter Regen', 63: 'Mäßiger Regen', 65: 'Starker Regen',
-                    66: 'Leichter gefrierender Regen', 67: 'Starker gefrierender Regen',
-                    71: 'Leichter Schneefall', 73: 'Mäßiger Schneefall', 75: 'Starker Schneefall',
-                    77: 'Schneegriesel', 80: 'Leichte Regenschauer', 81: 'Mäßige Regenschauer',
-                    82: 'Heftige Regenschauer', 85: 'Leichte Schneeschauer', 86: 'Starke Schneeschauer',
-                    95: 'Gewitter', 96: 'Gewitter mit leichtem Hagel', 99: 'Gewitter mit starkem Hagel'
-                };
-                return descriptionMap[wmoCode] || 'Unbekanntes Wetter';
-            }
-            
-            async function getCoordinates(cityName) {
-                const url = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(cityName)}&count=100&language=de&format=json`;
-                try {
-                    const response = await fetch(url);
-                    if (!response.ok) throw new Error(`Fehler beim Geocoding: ${response.statusText}`);
-                    const data = await response.json();
-                    if (data.results && data.results.length > 0) {
-                        return data.results.map(location => ({ lat: location.latitude, lon: location.longitude, name: location.name, country: location.country, admin1: location.admin1 }));
-                    }
-                    return null;
-                } catch (error) {
-                    console.error("Fehler beim Geocoding:", error);
-                    return null;
-                }
-            }
-            
-            function saveRecentCities(locationData) {
-                if (locationData.isPermanent) {
-                    localStorage.setItem(LAST_CITY_KEY, JSON.stringify(locationData));
-                    return;
-                }
-                let cities = getRecentCities().filter(c => !c.isPermanent);
-                const existingIndex = cities.findIndex(c => c.name === locationData.name && c.country === locationData.country);
-                if (existingIndex !== -1) {
-                    cities.splice(existingIndex, 1);
-                }
-                cities.unshift(locationData);
-                cities = cities.filter((c, index, self) => index === self.findIndex(t => t.name === c.name && t.country === t.country));
-                localStorage.setItem(RECENT_CITIES_KEY, JSON.stringify(cities.slice(0, 10)));
-                localStorage.setItem(LAST_CITY_KEY, JSON.stringify(locationData));
-            }
-
-            function getRecentCities() {
-                try {
-                    const recent = JSON.parse(localStorage.getItem(RECENT_CITIES_KEY)) || [];
-                    const nonPermanentCities = recent.filter(c => !c.isPermanent);
-                    const sortedNonPermanentCities = nonPermanentCities.sort((a, b) => a.name.localeCompare(b.name));
-                    return [...permanentCities, ...sortedNonPermanentCities];
-                } catch (e) {
-                    console.error("Fehler beim Laden der letzten Städte aus localStorage", e);
-                    return permanentCities;
-                }
-            }
-
-            async function fetchAndProcessWeather(locationData) {
-                const { lat, lon, name: cityName } = locationData;
-                lastLocationData = locationData; 
-
-                summaryStatusEl.textContent = 'Wetterdaten werden geladen...';
-                summaryStatusEl.classList.remove('hidden');
-                summaryDataEl.classList.add('hidden'); 
-                hourlyForecastContainerEl.classList.add('opacity-0');
-                weatherErrorEl.classList.add('hidden');
-                prevDayBtn.disabled = true;
-                nextDayBtn.disabled = true;
-                
-                let locationText = cityName;
-                weatherLocationEl.textContent = locationText;
-                singleAlertContainer.innerHTML = '';
-                
-                try {
-                    const timezone = 'Europe/Berlin';
-                    const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=temperature_2m,weathercode,pressure_msl,windspeed_10m,precipitation,windgusts_10m&daily=weathercode,temperature_2m_max,temperature_2m_min,windspeed_10m_max,precipitation_sum,sunshine_duration,windgusts_10m_max&timezone=${timezone}&forecast_days=10&past_days=3`;
-
-                    const response = await fetch(url);
-                    if (!response.ok) throw new Error(`Fehler beim Laden der Wetterdaten: ${response.statusText}`);
-                    const data = await response.json();
-                    
-                    if (!data.hourly || !data.daily) {
-                        throw new Error('Ungültige oder unvollständige Daten von der API erhalten.');
-                    }
-                    
-                    dailyForecasts = groupForecastByDay(data.hourly.time, data.hourly.temperature_2m, data.hourly.weathercode, data.hourly.pressure_msl, data.hourly.windspeed_10m, data.hourly.precipitation, data.hourly.windgusts_10m);
-                    dailyDataGlobal = data.daily;
-                    const today = new Date().toLocaleDateString('de-DE');
-                    
-                    currentDayIndex = dailyForecasts.findIndex(day => new Date(day[0].time).toLocaleDateString('de-DE') === today);
-                    if (currentDayIndex === -1) {
-                         currentDayIndex = 3;
-                    }
-
-                    updateWeatherDisplay();
-
-                } catch (error) {
-                    console.error("Fehler beim Abrufen der Wetterdaten:", error);
-                    weatherErrorEl.textContent = "Wetterdaten konnten nicht geladen werden. Bitte versuchen Sie es später erneut.";
-                    weatherErrorEl.classList.remove('hidden');
-                    summaryStatusEl.classList.add('hidden'); 
-                }
-            }
-            
-            function groupForecastByDay(times, temps, codes, pressures, windspeeds, precipitations, windgusts) {
-                const grouped = {};
-                times.forEach((timeStr, index) => {
-                    const date = new Date(timeStr).toLocaleDateString('de-DE');
-                    if (!grouped[date]) grouped[date] = [];
-                    grouped[date].push({ time: timeStr, temp: temps[index], code: codes[index], pressure: pressures[index], windspeed: windspeeds[index], precipitation: precipitations[index], windgust: windgusts[index] });
-                });
-                return Object.values(grouped);
-            }
-            
-            function getShortDayName(dateStr) {
-                const date = new Date(dateStr);
-                return date.toLocaleDateString('de-DE', { weekday: 'short' });
-            }
-
-            function getWarningsForDay(hourlyData, dailyData, index) {
-                const warnings = [];
-                
-                const hasHourlyData = hourlyData && hourlyData.length > 0;
-                const hasDailyData = dailyData && dailyData.time && dailyData.time.length > index;
-                if (!hasHourlyData && !hasDailyData) {
-                    return warnings;
-                }
-
-                if (hasHourlyData) {
-                    const thunderstormHour = hourlyData.find(h => [95, 96, 99].includes(h.code));
-                    if (thunderstormHour) {
-                        const time = new Date(thunderstormHour.time).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
-                        warnings.push({
-                            level: 'Severe',
-                            headline: `Gewitterwarnung`,
-                            description: `Ab ca. ${time} Uhr werden Gewitter erwartet. Diese können mit Sturmböen, Starkregen und Hagel einhergehen.`
-                        });
-                    }
-
-                    const extremWindHour = hourlyData.find(h => h.windgust >= 90);
-                    const severeWindHour = !extremWindHour ? hourlyData.find(h => h.windgust >= 75) : undefined;
-                    const moderateWindHour = !extremWindHour && !severeWindHour ? hourlyData.find(h => h.windgust >= 62) : undefined;
-                    
-                    if (extremWindHour) {
-                         const time = new Date(extremWindHour.time).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
-                        warnings.push({
-                            level: 'Extrem',
-                            headline: `Orkanwarnung`,
-                            description: `Ab ca. ${time} Uhr werden extreme Orkanböen mit Geschwindigkeiten von bis zu ${Math.round(extremWindHour.windgust)} km/h erwartet.`
-                        });
-                    }
-                    else if (severeWindHour) {
-                        const time = new Date(severeWindHour.time).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
-                        warnings.push({
-                            level: 'Severe',
-                            headline: `Sturmwarnung`,
-                            description: `Ab ca. ${time} Uhr werden schwere Sturmböen mit Geschwindigkeiten von bis zu ${Math.round(severeWindHour.windgust)} km/h erwartet.`
-                        });
-                    } else if (moderateWindHour) {
-                        const time = new Date(moderateWindHour.time).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
-                        warnings.push({
-                            level: 'Moderate',
-                            headline: `Warnung vor stürmischem Wind`,
-                            description: `Ab ca. ${time} Uhr werden Windböen mit Geschwindigkeiten von bis zu ${Math.round(moderateWindHour.windgust)} km/h erwartet.`
-                        });
-                    }
-
-                    const extremRainHour = hourlyData.find(h => h.precipitation >= 40);
-                    const severeRainHour = !extremRainHour ? hourlyData.find(h => h.precipitation >= 15) : undefined;
-                    const moderateRainHour = !extremRainHour && !severeRainHour ? hourlyData.find(h => h.precipitation >= 5) : undefined;
-
-                    if (extremRainHour) {
-                        const time = new Date(extremRainHour.time).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
-                        warnings.push({
-                            level: 'Extrem',
-                            headline: `Extrem-Unwetterwarnung`,
-                            description: `Ab ca. ${time} Uhr wird mit extremem Starkregen von ca. ${extremRainHour.precipitation.toFixed(1).replace('.', ',')} mm pro h gerechnet. Es besteht Lebensgefahr durch massive Überflutungen.`
-                        });
-                    }
-                    else if (severeRainHour) {
-                        const time = new Date(severeRainHour.time).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
-                        warnings.push({
-                            level: 'Severe',
-                            headline: `Starkregenwarnung`,
-                            description: `Ab ca. ${time} Uhr wird mit Starkregen von ca. ${severeRainHour.precipitation.toFixed(1).replace('.', ',')} mm pro h gerechnet.`
-                        });
-                    } else if (moderateRainHour) {
-                        const time = new Date(moderateRainHour.time).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
-                        warnings.push({
-                            level: 'Moderate',
-                            headline: `Warnung vor Starkregen`,
-                            description: `Ab ca. ${time} Uhr wird mit Regen von ca. ${moderateRainHour.precipitation.toFixed(1).replace('.', ',')} mm pro h gerechnet.`
-                        });
-                    }
-                }
-                
-                if (hasDailyData) {
-                    const dailyWindGust = dailyData.windgusts_10m_max[index];
-                    const dailyRainSum = dailyData.precipitation_sum[index];
-
-                    const hasWindWarning = warnings.some(w => w.headline.includes('Orkan') || w.headline.includes('Sturmwarnung') || w.headline.includes('stürmischem Wind'));
-                    if (!hasWindWarning) {
-                        if (dailyWindGust >= 90) {
-                            warnings.push({ level: 'Extrem', headline: `Orkanwarnung`, description: `Tageswert: Es werden extreme Orkanböen mit Spitzen von bis zu ${Math.round(dailyWindGust)} km/h erwartet.` });
-                        }
-                        else if (dailyWindGust >= 75) {
-                            warnings.push({ level: 'Severe', headline: `Sturmwarnung`, description: `Tageswert: Es werden schwere Sturmböen mit Spitzen von bis zu ${Math.round(dailyWindGust)} km/h erwartet.` });
-                        } else if (dailyWindGust >= 62) {
-                            warnings.push({ level: 'Moderate', headline: `Warnung vor stürmischem Wind`, description: `Tageswert: Es werden Windböen mit Spitzen von bis zu ${Math.round(dailyWindGust)} km/h erwartet.` });
-                        }
-                    }
-                    
-                    const hasRainWarning = warnings.some(w => w.headline.includes('Starkregen') || w.headline.includes('Extrem-Unwetterwarnung'));
-                    if (!hasRainWarning) {
-                        if (dailyRainSum >= 80) {
-                            warnings.push({ level: 'Extrem', headline: `Extrem-Unwetterwarnung`, description: `Tageswert: Es wird mit einer extremen Niederschlagsmenge von ca. ${dailyRainSum.toFixed(1).replace('.', ',')} mm gerechnet. Es besteht Lebensgefahr durch massive Überflutungen.` });
-                        }
-                        else if (dailyRainSum >= 30) {
-                            warnings.push({ level: 'Severe', headline: `Starkregenwarnung`, description: `Tageswert: Es wird mit ergiebigem Dauerregen und einer Niederschlagsmenge von ca. ${dailyRainSum.toFixed(1).replace('.', ',')} mm gerechnet.` });
-                        } else if (dailyRainSum >= 15) {
-                            warnings.push({ level: 'Moderate', headline: `Warnung vor Starkregen`, description: `Tageswert: Es wird mit Starkregen und einer Niederschlagsmenge von ca. ${dailyRainSum.toFixed(1).replace('.', ',')} mm gerechnet.` });
-                        }
-                    }
-                }
-                
-                const uniqueWarnings = [];
-                const seenHeadlines = new Set();
-                for (const warning of warnings) {
-                    if (!seenHeadlines.has(warning.headline)) {
-                        uniqueWarnings.push(warning);
-                        seenHeadlines.add(warning.headline);
-                    }
-                }
-                
-                return uniqueWarnings;
-            }
-
-            function updateWeatherDisplay() {
-                const now = new Date();
-                lastUpdatedEl.textContent = `Aktualisiert: ${now.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })} Uhr`;
-                dataValidFromEl.textContent = ''; 
-
-                if (!dailyForecasts || dailyForecasts.length === 0 || !dailyDataGlobal || !dailyDataGlobal.time || currentDayIndex < 0 || currentDayIndex >= dailyForecasts.length) {
-                    summaryStatusEl.textContent = 'Keine Wetterdaten verfügbar.';
-                    summaryStatusEl.classList.remove('hidden');
-                    summaryDataEl.classList.add('hidden');
-                    lastUpdatedEl.textContent = '';
-                    return;
-                }
-                
-                summaryStatusEl.classList.add('hidden');
-                hourlyForecastContainerEl.classList.remove('opacity-0');
-                weatherErrorEl.classList.add('hidden');
-
-                const currentDayForecast = dailyForecasts[currentDayIndex];
-                
-                if (!currentDayForecast || currentDayForecast.length === 0) {
-                    weatherErrorEl.textContent = 'Keine stündlichen Daten für diesen Tag verfügbar.';
-                    weatherErrorEl.classList.remove('hidden');
-                    hourlyForecastContainerEl.classList.add('opacity-0');
-                    return;
-                }
-
-                const firstForecast = currentDayForecast[0];
-                const dailyIndex = currentDayIndex;
-                const today = now.toLocaleDateString('de-DE');
-                const yesterday = new Date(now.getTime() - 86400000).toLocaleDateString('de-DE');
-                const tomorrow = new Date(now.getTime() + 86400000).toLocaleDateString('de-DE');
-                const forecastDate = new Date(firstForecast.time).toLocaleDateString('de-DE');
-                
-                if (forecastDate === today) {
-                    currentDateDisplayEl.classList.add('text-blue-600', 'font-extrabold');
-                    currentDateDisplayEl.textContent = 'Heute';
-                } else {
-                    currentDateDisplayEl.classList.remove('text-blue-600', 'font-extrabold');
-                    if (forecastDate === yesterday) currentDateDisplayEl.textContent = 'Gestern';
-                    else if (forecastDate === tomorrow) currentDateDisplayEl.textContent = 'Morgen';
-                    else {
-                        const shortDay = getShortDayName(firstForecast.time);
-                        const formattedDate = new Date(firstForecast.time).toLocaleDateString('de-DE', { day: 'numeric', month: 'short' });
-                        currentDateDisplayEl.textContent = `${shortDay}, ${formattedDate}`;
-                    }
-                }
-
-                const forecastStartIndex = 3;
-                if (dailyForecasts.length > forecastStartIndex && dailyForecasts[forecastStartIndex].length > 0) {
-                    const firstHourlyTimeStr = dailyForecasts[forecastStartIndex][0].time; 
-                    
-                    if (firstHourlyTimeStr) {
-                        const validDate = new Date(firstHourlyTimeStr);
-                        const dateStr = validDate.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' });
-                        const timeStr = validDate.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
-                        
-                        dataValidFromEl.textContent = `Basis: ${dateStr}, ${timeStr} Uhr`;
-                    }
-                }
-                
-                summaryDataEl.classList.remove('hidden');
-                
-                const pressures = currentDayForecast.map(f => f.pressure);
-                const maxPressure = pressures.length > 0 ? Math.max(...pressures) : null;
-                const minPressure = pressures.length > 0 ? Math.min(...pressures) : null;
-
-                const minTemp = dailyDataGlobal.temperature_2m_min[dailyIndex] !== undefined ? Math.round(dailyDataGlobal.temperature_2m_min[dailyIndex]) : 'N/A';
-                const maxTemp = dailyDataGlobal.temperature_2m_max[dailyIndex] !== undefined ? Math.round(dailyDataGlobal.temperature_2m_max[dailyIndex]) : 'N/A';
-                const summaryIconCode = dailyDataGlobal.weathercode[dailyIndex];
-                const formattedMaxPressure = maxPressure !== null ? `${Math.round(maxPressure)} hPa` : 'N/A';
-                const formattedMinPressure = minPressure !== null ? `${Math.round(minPressure)} hPa` : 'N/A';
-                const maxWindSpeed = dailyDataGlobal.windspeed_10m_max[dailyIndex] !== undefined ? `${Math.round(dailyDataGlobal.windspeed_10m_max[dailyIndex])} km/h` : 'N/A';
-                const maxWindGust = dailyDataGlobal.windgusts_10m_max[dailyIndex] !== undefined ? `${Math.round(dailyDataGlobal.windgusts_10m_max[dailyIndex])} km/h` : 'N/A';
-                const totalPrecipitation = dailyDataGlobal.precipitation_sum[dailyIndex] !== undefined ? `${dailyDataGlobal.precipitation_sum[dailyIndex].toFixed(1).replace('.', ',')} mm` : 'N/A';
-                
-                const sunshineDuration = dailyDataGlobal.sunshine_duration[dailyIndex];
-                const hours = Math.floor(sunshineDuration / 3600);
-                const minutes = Math.round((sunshineDuration % 3600) / 60);
-                const formattedSunshine = sunshineDuration > 0 ? `${hours} h ${minutes} min` : '0 h 0 min';
-
-                dailyTempRangeEl.textContent = `${minTemp}°C / ${maxTemp}°C`;
-                dailyDescEl.textContent = getWeatherDescription(summaryIconCode);
-                dailyIconContainerEl.innerHTML = getWeatherEmoji(summaryIconCode);
-                
-                dailyDetailsEl.innerHTML = `Druck: ${formattedMaxPressure} / ${formattedMinPressure}<br><span id="dailyWindValue" class="cursor-pointer hover:underline">Wind: ${maxWindSpeed}, Böen: ${maxWindGust}</span><br><span id="dailyRainValue" class="cursor-pointer hover:underline">Niederschlag: ${totalPrecipitation}</span><br>Sonnenschein: ${formattedSunshine}`;
-
-                document.getElementById('dailyWindValue')?.addEventListener('click', () => openPopup('windPopup'));
-                document.getElementById('dailyRainValue')?.addEventListener('click', () => openPopup('rainPopup'));
-
-                hourlyForecastContainerEl.innerHTML = '';
-                const hourlyMap = new Map(currentDayForecast.map(f => [new Date(f.time).getHours(), f]));
-                const currentHour = now.getHours();
-
-                for (let h = 0; h < 24; h++) {
-                    const time = `${String(h).padStart(2, '0')}:00`;
-                    const forecast = hourlyMap.get(h);
-                    let cardContent;
-                    
-                    let cardClasses = `p-1 rounded-lg shadow-md text-sm text-center w-[80px] flex flex-col justify-start cursor-pointer flex-shrink-0`;
-                    
-                    if (forecast) {
-                        const formattedTemp = forecast.temp !== undefined && forecast.temp !== null ? `${Math.round(forecast.temp)}°C` : 'N/A';
-                        const rawPrecipitation = forecast.precipitation !== undefined ? forecast.precipitation : 0;
-                        const formattedPrecipitation = rawPrecipitation.toFixed(1).replace('.', ',');
-                        const iconCode = forecast.code;
-                        const windspeedValue = forecast.windspeed !== undefined ? Math.round(forecast.windspeed) : 0;
-                        const windgustValue = forecast.windgust !== undefined ? Math.round(forecast.windgust) : 0;
-                        const pressureValue = forecast.pressure !== undefined ? Math.round(forecast.pressure) : 'N/A';
-                        
-                        let infoBlock = `
-                            <div class="flex flex-col items-center justify-start h-10">
-                                <span class="text-xs text-gray-700">${windspeedValue}-${windgustValue} km/h</span> 
-                                <span class="text-xs text-gray-700">${pressureValue} hPa</span>
-                                ${rawPrecipitation > 0 ? `<span class="text-xs text-blue-500">${formattedPrecipitation} mm</span>` : ''}
-                            </div>
-                        `;
-
-                        if (forecastDate === today && h === currentHour) {
-                            cardClasses = `p-1 rounded-lg shadow-xl text-sm text-center w-[80px] flex flex-col justify-start bg-blue-200 text-blue-800 border-2 border-blue-400 flex-shrink-0`;
-                            cardContent = `<p class="font-bold text-blue-800">${time}</p><div class="flex flex-col items-center my-2"><p class="text-3xl">${getWeatherEmoji(iconCode)}</p><p class="text-lg font-bold text-blue-800">${formattedTemp}</p></div>${infoBlock}`;
-                        } else {
-                            cardClasses += ` bg-gray-100 text-gray-700`;
-                            cardContent = `<p class="font-bold text-gray-700">${time}</p><div class="flex flex-col items-center my-2"><p class="text-3xl">${getWeatherEmoji(iconCode)}</p><p class="text-lg font-bold text-indigo-600">${formattedTemp}</p></div>${infoBlock}`;
-                        }
-                    } else {
-                        cardClasses += ` bg-red-200 text-red-800 border-2 border-red-500`;
-                        cardContent = `<p class="font-bold text-red-800">${time}</p><div class="flex flex-col items-center my-2"><p class="text-3xl">${getWeatherEmoji('error')}</p><p class="text-lg font-bold text-red-800">N/A</p></div><div class="flex flex-col items-center justify-start h-10">N/A</div>`;
-                    }
-                    
-                    const forecastCard = document.createElement('div');
-                    forecastCard.className = cardClasses;
-                    forecastCard.id = `hourly-forecast-${h}`;
-                    hourlyForecastContainerEl.appendChild(forecastCard);
-                    forecastCard.innerHTML = cardContent;
-                }
-                
-                setTimeout(() => {
-                    if (forecastDate === today) {
-                        const currentHourCard = document.getElementById(`hourly-forecast-${currentHour}`);
-                        if (currentHourCard) {
-                            currentHourCard.scrollIntoView({ behavior: 'instant', block: 'nearest', inline: 'start' });
-                        }
-                    } else {
-                        const noonCard = document.getElementById('hourly-forecast-12');
-                        if (noonCard) {
-                            noonCard.scrollIntoView({ behavior: 'instant', block: 'nearest', inline: 'center' });
-                        }
-                    }
-                }, 0); 
-                
-                prevDayBtn.disabled = currentDayIndex <= 0;
-                nextDayBtn.disabled = currentDayIndex >= dailyForecasts.length - 1;
-
-                const currentDayWarnings = getWarningsForDay(currentDayForecast, dailyDataGlobal, dailyIndex);
-                singleAlertContainer.innerHTML = '';
-                if (currentDayWarnings.length > 0) {
-                    const upcomingWarning = currentDayWarnings.find(w => w.level === 'Extrem') || currentDayWarnings.find(w => w.level === 'Severe') || currentDayWarnings[0];
-                    const alertIndicator = document.createElement('button');
-                    alertIndicator.innerHTML = '!';
-                    const levelClass = `alert-level-${upcomingWarning.level}`;
-                    alertIndicator.className = `w-6 h-6 flex items-center justify-center rounded-full shadow-lg ${levelClass} text-white font-extrabold text-lg transform hover:scale-110 focus:outline-none ml-4`;
-                    alertIndicator.setAttribute('aria-label', `Wetterwarnung anzeigen: ${upcomingWarning.headline}`);
-                    alertIndicator.setAttribute('title', `Wetterwarnung: ${upcomingWarning.headline}`);
-                    
-                    alertIndicator.addEventListener('click', () => {
-                        document.getElementById('alertPopupHeadline').textContent = upcomingWarning.headline;
-                        document.getElementById('alertPopupDescription').textContent = upcomingWarning.description;
-                        openPopup('alertPopup');
-                    });
-
-                    singleAlertContainer.appendChild(alertIndicator);
-                }
-            }
-            
-            function deleteRecentCity(cityToDeleteName) {
-                let cities = getRecentCities().filter(c => !c.isPermanent);
-                cities = cities.filter(city => city.name !== cityToDeleteName);
-                localStorage.setItem(RECENT_CITIES_KEY, JSON.stringify(cities));
-                const lastCity = JSON.parse(localStorage.getItem(LAST_CITY_KEY));
-                if (lastCity && lastCity.name === cityToDeleteName && !lastCity.isPermanent) {
-                    localStorage.removeItem(LAST_CITY_KEY);
-                }
-                renderRecentCitiesPopup();
-            }
-            
-            function renderRecentCitiesPopup() {
-                const cities = getRecentCities();
-                recentCitiesListEl.innerHTML = '';
-                if (cities.length > 0) {
-                    noRecentCitiesEl.classList.add('hidden');
-                    cities.forEach(city => {
-                        const cityItem = document.createElement('div');
-                        cityItem.className = "flex items-center justify-between p-3 bg-blue-100 text-blue-800 rounded-lg font-semibold w-full text-left hover:bg-blue-200";
-
-                        const cityBtn = document.createElement('button');
-                        cityBtn.className = "flex-grow text-left";
-                        cityBtn.textContent = city.name;
-                        
-                        cityBtn.addEventListener('click', async () => {
-                            saveRecentCities(city);
-                            fetchAndProcessWeather(city);
-                            toggleSearchbar(false);
-                            closePopups();
-                        });
-
-                        cityItem.appendChild(cityBtn);
-                        
-                        if (!city.isPermanent) {
-                            const deleteBtn = document.createElement('button');
-                            deleteBtn.className = "delete-btn ml-2";
-                            deleteBtn.innerHTML = '✕';
-                            deleteBtn.title = `Löschen ${city.name}`;
-                            deleteBtn.addEventListener('click', (e) => {
-                                e.stopPropagation();
-                                deleteRecentCity(city.name);
-                            });
-                            cityItem.appendChild(deleteBtn);
-                        }
-                        
-                        recentCitiesListEl.appendChild(cityItem);
-                    });
-                } else {
-                    noRecentCitiesEl.classList.remove('hidden');
-                }
-                openPopup('recentCitiesPopup');
-            }
-            
-            async function handleCitySearch(cityName) {
-                if (cityName) {
-                    weatherErrorEl.classList.add('hidden');
-                    const locationDataList = await getCoordinates(cityName);
-                    if (locationDataList && locationDataList.length > 0) {
-                        const defaultLocation = locationDataList[0];
-                        await fetchAndProcessWeather(defaultLocation);
-                        saveRecentCities(defaultLocation);
-                        toggleSearchbar(false);
-                        cityInputEl.value = '';
-                    } else {
-                        weatherErrorEl.textContent = "Ort wurde nicht gefunden. Bitte versuchen Sie es erneut.";
-                        weatherErrorEl.classList.remove('hidden');
-                    }
-                } else {
-                    weatherErrorEl.textContent = "Bitte geben Sie einen Ort ein.";
-                    weatherErrorEl.classList.remove('hidden');
-                }
-            }
-
-            searchBtnEl.addEventListener('click', async () => {
-                await handleCitySearch(cityInputEl.value.trim());
-            });
-            
-            recentCitiesBtn.addEventListener('click', renderRecentCitiesPopup);
-
-            closeSearchBtn.addEventListener('click', () => {
-                toggleSearchbar(false);
-                suggestionsContainerEl.classList.add('hidden');
-            });
-
-            function toggleSearchbar(show = true) {
-                weatherLocationEl.classList.toggle('cursor-pointer', !show);
-                
-                if (show) {
-                    searchViewEl.classList.remove('opacity-0', 'pointer-events-none');
-                    weatherLocationEl.classList.add('hidden');
-                    
-                    if (lastLocationData) {
-                        const googleMapsUrl = `https://www.google.com/maps?q=${lastLocationData.lat},${lastLocationData.lon}&z=12`;
-                        let coordsText = `<span class="font-bold">Letzte Suche</span><br>
-                                            ${lastLocationData.name}, ${lastLocationData.admin1 ? lastLocationData.admin1 + ', ' : ''}${lastLocationData.country}
-                                            <br>
-                                            <a href="${googleMapsUrl}" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:underline">
-                                                ${lastLocationData.lat.toFixed(4).replace('.', ',')}, ${lastLocationData.lon.toFixed(4).replace('.', ',')}
-                                            </a>`;
-                        
-                        searchCoordsEl.innerHTML = coordsText;
-                    } else {
-                        searchCoordsEl.innerHTML = '';
-                    }
-                    
-                } else {
-                    searchViewEl.classList.add('opacity-0', 'pointer-events-none');
-                    weatherLocationEl.classList.remove('hidden');
-                }
-            }
-            
-            weatherLocationEl.addEventListener('click', () => toggleSearchbar(true));
-
-            prevDayBtn.addEventListener('click', () => {
-                if (currentDayIndex > 0) {
-                    currentDayIndex--;
-                    updateWeatherDisplay();
-                }
-            });
-
-            nextDayBtn.addEventListener('click', () => {
-                if (currentDayIndex < dailyForecasts.length - 1) {
-                    currentDayIndex++;
-                    updateWeatherDisplay();
-                }
-            });
-
-            async function loadInitialCity() {
-                try {
-                    const lastCity = localStorage.getItem(LAST_CITY_KEY);
-                    let locationData = null;
-                    if (lastCity) {
-                        locationData = JSON.parse(lastCity);
-                    }
-                    
-                    if (locationData) {
-                        await fetchAndProcessWeather(locationData);
-                        toggleSearchbar(false);
-                    } else {
-                        const defaultLocation = permanentCities.find(c => c.name === STADTBERGEN_NAME) || permanentCities[0];
-                        saveRecentCities(defaultLocation);
-                        await fetchAndProcessWeather(defaultLocation);
-                        toggleSearchbar(false);
-                    }
-                } catch(e) {
-                    console.error("Fehler beim Laden des Startortes.", e);
-                    toggleSearchbar(true);
-                }
-            }
-
-            let debounceTimeout;
-            function debounce(func, delay) {
-                return function(...args) {
-                    clearTimeout(debounceTimeout);
-                    debounceTimeout = setTimeout(() => func.apply(this, args), delay);
-                };
-            }
-
-            async function fetchAndRenderSuggestions(query) {
-                if (query.length < 3) {
-                    suggestionsContainerEl.innerHTML = '';
-                    suggestionsContainerEl.classList.add('hidden');
-                    return;
-                }
-                weatherErrorEl.classList.add('hidden');
-                
-                const locationDataList = await getCoordinates(query);
-                
-                suggestionsContainerEl.innerHTML = '';
-                if (locationDataList && locationDataList.length > 0) {
-                    locationDataList.sort((a, b) => {
-                        const getPriority = (loc) => {
-                            if (loc.country === 'Deutschland' && loc.admin1 === 'Bayern') return 1;
-                            if (loc.country === 'Deutschland') return 2;
-                            return 3;
-                        };
-
-                        const priorityA = getPriority(a);
-                        const priorityB = getPriority(b);
-
-                        if (priorityA !== priorityB) {
-                            return priorityA - priorityB;
-                        }
-
-                        const countryA = a.country || '';
-                        const countryB = b.country || '';
-                        const admin1A = a.admin1 || '';
-                        const admin1B = b.admin1 || '';
-                        const nameA = a.name || '';
-                        const nameB = b.name || '';
-                        
-                        const countryCompare = countryA.localeCompare(countryB);
-                        if (countryCompare !== 0) return countryCompare;
-                        
-                        const admin1Compare = admin1A.localeCompare(admin1B);
-                        if (admin1Compare !== 0) return admin1Compare;
-
-                        return nameA.localeCompare(nameB);
-                    });
-
-                    locationDataList.forEach(result => {
-                        const suggestionItem = document.createElement('div');
-                        suggestionItem.className = 'suggestion-item';
-                        
-                        let locationText = `
-                            <span class="font-semibold">${result.name}</span>
-                            <br>
-                            <span class="text-gray-500">${result.admin1 ? result.admin1 + ', ' : ''}${result.country}</span>
-                        `;
-                        suggestionItem.innerHTML = locationText;
-
-                        suggestionItem.addEventListener('click', async () => {
-                            cityInputEl.value = result.name;
-                            suggestionsContainerEl.classList.add('hidden');
-                            await fetchAndProcessWeather(result);
-                            saveRecentCities(result);
-                            toggleSearchbar(false);
-                        });
-                        suggestionsContainerEl.appendChild(suggestionItem);
-                    });
-                    suggestionsContainerEl.classList.remove('hidden');
-                } else {
-                    suggestionsContainerEl.classList.add('hidden');
-                }
-            }
-
-            cityInputEl.addEventListener('input', debounce((e) => {
-                fetchAndRenderSuggestions(e.target.value);
-            }, 300));
-
-            document.addEventListener('click', (e) => {
-                if (!cityInputEl.contains(e.target) && !suggestionsContainerEl.contains(e.target)) {
-                    suggestionsContainerEl.classList.add('hidden');
-                }
-            });
-
-            loadInitialCity();
-            
-            setInterval(() => {
-                if (lastLocationData) {
-                    console.log(`Aktualisiere Wetterdaten für ${lastLocationData.name} automatisch...`);
-                    fetchAndProcessWeather(lastLocationData);
-                }
-            }, 1800000); 
+  <script type="module">
+    // PWA: Service Worker Registrierung
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('sw.js').catch(err => console.log('SW error', err));
         });
-    </script>
+    }
+
+    // UI-Elemente
+    const localClockDeElement = document.getElementById('local-clock-de');
+    const clockElement = document.getElementById('clock');
+    const timezoneSelectorButton = document.getElementById('timezone-selector-button');
+    const dateElement = document.getElementById('date-display');
+    const timezoneModal = document.getElementById('timezone-modal');
+    const selectedCityTitleElement = document.getElementById('selected-city-title');
+    const timeDifferenceElement = document.getElementById('time-difference-display');
+    const modalOptionsContainer = document.getElementById('modal-options-container');
+    const searchableCitiesPulldown = document.getElementById('searchable-cities-pulldown');
+    const dataStatusInfo = document.getElementById('data-status-info');
+
+    // Konstanten für spezielle Zeitzonen
+    const KIRIBATI_OST_TZ = 'Pacific/Kiritimati'; 
+
+    // Deine bestehende cityToTimezoneMap...
+    const cityToTimezoneMap = {
+        'abu dhabi': 'Asia/Dubai', 'accra': 'Africa/Accra', 'alexandria': 'Africa/Cairo', 'algier': 'Africa/Algiers',
+        'amman': 'Asia/Amman', 'amsterdam': 'Europe/Amsterdam', 'ankara': 'Europe/Istanbul', 'antananarivo': 'Indian/Antananarivo',
+        'apia': 'Pacific/Apia', 'aschgabat': 'Asia/Ashgabat', 'asmara': 'Africa/Asmara', 'astana': 'Asia/Almaty',
+        'asunción': 'America/Asuncion', 'athen': 'Europe/Athens', 'auckland': 'Pacific/Auckland', 'bagdad': 'Asia/Baghdad',
+        'baku': 'Asia/Baku', 'bamako': 'Africa/Bamako', 'bangalore': 'Asia/Kolkata', 'bangalore': 'Asia/Kolkata', 'bangkok': 'Asia/Bangkok',
+        'bangui': 'Africa/Bangui', 'banjul': 'Africa/Banjul', 'barcelona': 'Europe/Madrid', 'basseterre': 'America/St_Kitts',
+        'beirut': 'Asia/Beirut', 'belgrad': 'Europe/Belgrade', 'belmopan': 'America/Belize', 'berlin': 'Europe/Berlin',
+        'bern': 'Europe/Zurich', 'birmingham': 'Europe/London', 'bischkek': 'Asia/Bishkek', 'bissau': 'Africa/Bissau',
+        'bogotá': 'America/Bogota', 'boston': 'America/New_York', 'brasilia': 'America/Sao_Paulo',
+        'bratislava': 'Europe/Bratislava', 'brazzaville': 'Africa/Brazzaville', 'bridgetown': 'America/Barbados',
+        'brisbane': 'Australia/Brisbane', 'brüssel': 'Europe/Brussels', 'budapest': 'Europe/Budapest',
+        'buenos aires': 'America/Argentina/Buenos_Aires', 'busan': 'Asia/Seoul', 'bukarest': 'Europe/Bucharest',
+        'canberra': 'Australia/Sydney', 'caracas': 'America/Caracas', 'casablanca': 'Africa/Casablanca',
+        'castries': 'America/St_Lucia', 'chennai': 'Asia/Kolkata', 'chicago': 'America/Chicago',
+        'chisinau': 'Europe/Chisinau', 'chongqing': 'Asia/Shanghai', 'colombo': 'Asia/Colombo', 'conakry': 'Africa/Conakry',
+        'dakar': 'Africa/Dakar', 'damaskus': 'Asia/Damascus', 'dhaka': 'Asia/Dhaka', 'dili': 'Asia/Dili',
+        'dschibuti': 'Africa/Djibouti', 'dodoma': 'Africa/Dar_es_Salaam', 'doha': 'Asia/Qatar', 'dubai': 'Asia/Dubai',
+        'dublin': 'Europe/Dublin', 'duschanbe': 'Asia/Dushanbe', 'eriwan': 'Asia/Yerevan', 'frankfurt': 'Europe/Berlin',
+        'freetown': 'Africa/Freetown', 'funafuti': 'Pacific/Funafuti', 'gaborone': 'Africa/Gaborone', 'genf': 'Europe/Zurich',
+        'georgetown': 'America/Guyana', 'glasgow': 'Europe/London', 'guadalajara': 'America/Mexico_City',
+        'guangzhou': 'Asia/Shanghai', 'guatemala-stadt': 'America/Guatemala', 'hamburg': 'Europe/Berlin',
+        'hanoi': 'Asia/Ho_Chi_Minh', 'harare': 'Africa/Harare', 'havanna': 'America/Havana', 'helsinki': 'Europe/Helsinki',
+        'ho-chi-minh-stadt': 'Asia/Ho_Chi_Minh', 'hongkong': 'Asia/Hong_Kong', 'honiara': 'Pacific/Guadalcanal',
+        'honolulu': 'Pacific/Honolulu', 'houston': 'America/Chicago', 'islamabad': 'Asia/Karachi',
+        'istanbul': 'Europe/Istanbul', 'jakarta': 'Asia/Jakarta', 'jaunde': 'Africa/Douala', 'jeddah': 'Asia/Riyadh',
+        'jerusalem': 'Asia/Jerusalem', 'johannesburg': 'Africa/Johannesburg', 'kabul': 'Asia/Kabul',
+        'kairo': 'Africa/Cairo', 'kampala': 'Africa/Kampala', 'kapstadt': 'Africa/Johannesburg', 'karachi': 'Asia/Karachi',
+        'kathmandu': 'Asia/Kathmandu', 'khartum': 'Africa/Khartoum', 'kiew': 'Europe/Kiev', 'kigali': 'Africa/Kigali',
+        'kingston': 'America/Jamaica', 'kingstown': 'America/St_Vincent', 'kinshasa': 'Africa/Kinshasa',
+        'kolkata': 'Asia/Kolkata', 'kopenhagen': 'Europe/Copenhagen', 'kuala lumpur': 'Asia/Kuala_Lumpur',
+        'kuwait-stadt': 'Asia/Kuwait', 'köln': 'Europe/Berlin', 'la paz': 'America/La_Paz', 'lagos': 'Africa/Lagos',
+        'las vegas': 'America/Los_Angeles', 'libreville': 'Africa/Libreville', 'lilongwe': 'Africa/Blantyre',
+        'lima': 'America/Lima', 'lissabon': 'Europe/Lisbon', 'ljubljana': 'Europe/Ljubljana', 'lomé': 'Africa/Lome',
+        'london': 'Europe/London', 'los angeles': 'America/Los_Angeles', 'luanda': 'Africa/Luanda',
+        'lusaka': 'Africa/Lusaka', 'luxemburg': 'Europe/Luxembourg', 'lyon': 'Europe/Paris', 'madrid': 'Europe/Madrid',
+        'mailand': 'Europe/Rome', 'majuro': 'Pacific/Majuro', 'malabo': 'Africa/Malabo', 'malé': 'Indian/Maldives',
+        'manchester': 'Europe/London', 'managua': 'America/Managua', 'manama': 'Asia/Bahrain', 'manila': 'Asia/Manila',
+        'maputo': 'Africa/Maputo', 'marseille': 'Europe/Paris', 'maseru': 'Africa/Maseru', 'mbabane': 'Africa/Mbabane',
+        'medellín': 'America/Bogota', 'mekka': 'Asia/Riyadh', 'melbourne': 'Australia/Melbourne',
+        'mexiko-stadt': 'America/Mexico_City', 'miami': 'America/New_York', 'minsk': 'Europe/Minsk',
+        'mogadischu': 'Africa/Mogadishu', 'monaco': 'Europe/Monaco', 'monrovia': 'Africa/Monrovia',
+        'montevideo': 'America/Montevideo', 'montreal': 'America/Toronto', 'moroni': 'Indian/Comoro',
+        'moskau': 'Europe/Moscow', 'mumbai': 'Asia/Kolkata', 'maskat': 'Asia/Muscat', 'münchen': 'Europe/Berlin',
+        'nairobi': 'Africa/Nairobi', 'nassau': 'America/Nassau', 'naypyidaw': 'Asia/Yangon',
+        'n’djamena': 'Africa/Ndjamena', 'neapel': 'Europe/Rome', 'neu-delhi': 'Asia/Kolkata', 'new york': 'America/New_York',
+        'ngerulmud': 'Pacific/Palau', 'niamey': 'Africa/Niamey', 'nikosia': 'Asia/Nicosia',
+        'nouakchott': 'Africa/Nouakchott', 'nuku alofa': 'Pacific/Tongatapu', 'osaka': 'Asia/Tokyo', 'oslo': 'Europe/Oslo',
+        'ottawa': 'America/Toronto', 'ouagadougou': 'Africa/Ouagadougou', 'palikir': 'Pacific/Pohnpei',
+        'panama-stadt': 'America/Panama', 'paramaribo': 'America/Paramaribo', 'paris': 'Europe/Paris',
+        'peking': 'Asia/Shanghai', 'perth': 'Australia/Perth', 'phnom penh': 'Asia/Phnom_Penh',
+        'pjöngjang': 'Asia/Pyongyang', 'podgorica': 'Europe/Podgorica', 'port louis': 'Indian/Mauritius',
+        'port moresby': 'Pacific/Port_Moresby', 'port-au-prince': 'America/Port-au-Prince',
+        'port of spain': 'America/Port_of_Spain', 'port vila': 'Pacific/Efate', 'prag': 'Europe/Prague',
+        'praia': 'Atlantic/Cape_Verde', 'pretoria': 'Africa/Johannesburg', 'quito': 'America/Guayaquil',
+        'rabat': 'Africa/Casablanca', 'reykjavik': 'Atlantic/Reykjavik', 'riga': 'Europe/Riga', 'riad': 'Asia/Riyadh',
+        'rio de janeiro': 'America/Sao_Paulo', 'rom': 'Europe/Rome', 'roseau': 'America/Dominica',
+        'san francisco': 'America/Los_Angeles', 'san josé': 'America/Costa_Rica', 'san marino': 'Europe/San_Marino',
+        'san salvador': 'America/El_Salvador', 'sanaa': 'Asia/Aden', 'sankt petersburg': 'Europe/Moscow',
+        'santiago': 'America/Santiago', 'santo domingo': 'America/Santo_Domingo', 'são tomé': 'Africa/Sao_Tome',
+        'sarajevo': 'Europe/Sarajevo', 'seattle': 'America/Los_Angeles', 'seoul': 'Asia/Seoul',
+        'shanghai': 'Asia/Shanghai', 'shenzhen': 'Asia/Shanghai', 'singapur': 'Asia/Singapore', 'skopje': 'Europe/Skopje',
+        'sofia': 'Europe/Sofia', 'st. george\'s': 'America/Grenada', 'st. john\'s': 'America/Antigua',
+        'stockholm': 'Europe/Stockholm', 'suva': 'Pacific/Fiji', 'sydney': 'Australia/Sydney', 'taipeh': 'Asia/Taipei',
+        'tallinn': 'Europe/Tallinn', 'tarawa': 'Pacific/Tarawa', 'taschkent': 'Asia/Tashkent',
+        'tiflis': 'Asia/Tbilisi', 'tegucigalpa': 'America/Tegucigalpa', 'teheran': 'Asia/Tehran',
+        'thimphu': 'Asia/Thimphu', 'tirana': 'Europe/Tirana', 'tokio': 'Asia/Tokyo', 'toronto': 'America/Toronto',
+        'tripolis': 'Africa/Tripoli', 'tunis': 'Africa/Tunis', 'ulaanbaatar': 'Asia/Ulaanbaatar',
+        'vaduz': 'Europe/Vaduz', 'valletta': 'Europe/Malta', 'vancouver': 'America/Vancouver',
+        'vatikanstadt': 'Europe/Vatican', 'victoria': 'Indian/Mahe', 'vientiane': 'Asia/Vientiane',
+        'vilnius': 'Europe/Vilnius', 'warschau': 'Europe/Warsaw', 'washington dc': 'America/New_York',
+        'wellington': 'Pacific/Auckland', 'wien': 'Europe/Vienna', 'windhoek': 'Africa/Windhoek',
+        'yokohama': 'Asia/Tokyo', 'zagreb': 'Europe/Zagreb', 'zürich': 'Europe/Zurich'
+    };
+    
+    // Kuratierte Listen...
+    const geographicTimezones = [
+        { name: 'Berlin', timezone: 'Europe/Berlin' }, 
+        { name: 'Brasilia', timezone: 'America/Sao_Paulo' },
+        { name: 'Dubai', timezone: 'Asia/Dubai' }, 
+        { name: 'Kanarische Inseln', timezone: 'Atlantic/Canary' }, 
+        { name: 'London', timezone: 'Europe/London' },
+        { name: 'Los Angeles', timezone: 'America/Los_Angeles' }, 
+        { name: 'Neu-Delhi', timezone: 'Asia/Kolkata' },
+        { name: 'New York', timezone: 'America/New_York' }, 
+        { name: 'Peking', timezone: 'Asia/Shanghai' },
+        { name: 'Kiribati Ost *', timezone: KIRIBATI_OST_TZ }, 
+        { name: 'Amerikanisch-Samoa *', timezone: 'Pacific/Pago_Pago' }, 
+        { name: 'Singapur', timezone: 'Asia/Singapore' },
+        { name: 'Sydney', timezone: 'Australia/Sydney' }, 
+        { name: 'Tokio', timezone: 'Asia/Tokyo' },
+    ];
+    const specialTimezones = [
+        { name: 'Astrozeit (Augsburg)', timezone: 'astro' }, { name: 'MEZ', timezone: 'MEZ' },
+        { name: 'MESZ', timezone: 'MESZ' }, { name: 'UTC / GMT', timezone: 'Etc/UTC' },
+        { name: 'WOZ (Augsburg)', timezone: 'wot' },
+    ];
+    
+    geographicTimezones.sort((a, b) => a.name.localeCompare(b.name));
+    specialTimezones.sort((a, b) => a.name.localeCompare(b.name));
+
+    let selectedTimezone = localStorage.getItem('selectedTimezone') || 'Europe/Berlin';
+    let selectedCityName = localStorage.getItem('selectedCityName') || 'Berlin';
+    
+    function createModalButtons() {
+        modalOptionsContainer.innerHTML = '';
+        const geographicHeading = document.createElement('h4');
+        geographicHeading.className = "text-xl font-bold text-black text-center";
+        geographicHeading.textContent = "Häufige Zeitzonen";
+        modalOptionsContainer.appendChild(geographicHeading);
+
+        const geographicContainer = document.createElement('div');
+        geographicContainer.className = "grid grid-cols-1 sm:grid-cols-2 gap-2";
+        modalOptionsContainer.appendChild(geographicContainer);
+
+        geographicTimezones.forEach(option => {
+            const button = document.createElement('button');
+            button.className = "modal-option text-black text-lg px-4 py-2 rounded-lg bg-indigo-500/50 hover:bg-indigo-500/70 transition-colors duration-200";
+            button.textContent = option.name;
+            button.dataset.timezone = option.timezone;
+            button.dataset.cityName = option.name.replace(' *', '');
+            geographicContainer.appendChild(button);
+        });
+        
+        const separator = document.createElement('div');
+        separator.className = "w-full h-1 my-4 bg-gray-400 rounded-full";
+        modalOptionsContainer.appendChild(separator);
+        
+        const specialHeading = document.createElement('h4');
+        specialHeading.className = "text-xl font-bold text-black text-center";
+        specialHeading.textContent = "Spezielle Zeitzonen";
+        modalOptionsContainer.appendChild(specialHeading);
+
+        const specialContainer = document.createElement('div');
+        specialContainer.className = "grid grid-cols-1 sm:grid-cols-2 gap-2";
+        modalOptionsContainer.appendChild(specialContainer);
+
+        specialTimezones.forEach(option => {
+            const button = document.createElement('button');
+            button.className = "modal-option text-black text-lg px-4 py-2 rounded-lg bg-yellow-500/50 hover:bg-yellow-500/70 transition-colors duration-200";
+            button.textContent = option.name;
+            button.dataset.timezone = option.timezone;
+            button.dataset.cityName = option.name.replace(' *', '');
+            specialContainer.appendChild(button);
+        });
+    }
+    
+    function populateSearchableCitiesDropdown() {
+        searchableCitiesPulldown.innerHTML = '';
+        const placeholder = document.createElement('option');
+        placeholder.textContent = 'Großstadt / Hauptstadt wählen...';
+        placeholder.value = '';
+        searchableCitiesPulldown.appendChild(placeholder);
+
+        const sortedCities = Object.keys(cityToTimezoneMap).sort();
+        sortedCities.forEach(cityKey => {
+            const option = document.createElement('option');
+            const displayName = cityKey.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+            option.textContent = displayName;
+            option.value = `${cityToTimezoneMap[cityKey]}|${displayName}`;
+            searchableCitiesPulldown.appendChild(option);
+        });
+    }
+
+    function saveTimezone(timezone, cityName) {
+        localStorage.setItem('selectedTimezone', timezone);
+        localStorage.setItem('selectedCityName', cityName);
+        selectedTimezone = timezone;
+        selectedCityName = cityName;
+    }
+    
+    function getOffsetHours(timezone) {
+        if (timezone === 'MEZ') return 1;
+        if (timezone === 'MESZ') return 2;
+        if (timezone === 'wot' || timezone === 'astro') return null; 
+        
+        if (timezone === Intl.DateTimeFormat().resolvedOptions().timeZone) {
+             try {
+                return getOffsetHoursDynamic(timezone); 
+             } catch (e) {
+                return new Date().getTimezoneOffset() / -60;
+             }
+        }
+        return getOffsetHoursDynamic(timezone);
+    }
+    
+    function getOffsetHoursDynamic(timezone) {
+        try {
+            const date = new Date();
+            const formatter = new Intl.DateTimeFormat('en-US', {
+                timeZone: timezone,
+                timeZoneName: 'shortOffset',
+                hour: '2-digit'
+            });
+            const parts = formatter.formatToParts(date);
+            const offsetPart = parts.find(p => p.type === 'timeZoneName' && (p.value.startsWith('GMT') || p.value.startsWith('UTC')));
+            
+            if (offsetPart) {
+                const offsetString = offsetPart.value;
+                const match = offsetString.match(/([+-]\d{1,2}(:\d{2})?)/);
+                if (match) {
+                    const offset = match[1];
+                    if (offset.includes(':')) {
+                        const parts = offset.match(/([+-])(\d{1,2}):(\d{2})/);
+                        if (parts) {
+                            const sign = parts[1] === '-' ? -1 : 1;
+                            const h = Number(parts[2]);
+                            const m = Number(parts[3]);
+                            return sign * (h + m / 60);
+                        }
+                    }
+                    return Number(offset);
+                } 
+                if (offsetString === 'GMT' || offsetString === 'UTC' || offsetString === 'Z') {
+                    return 0;
+                }
+            }
+        } catch (e) { console.error(e); }
+        return null;
+    }
+
+    function calculateTimeDifference() {
+        const localTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone; 
+        const localOffset = getOffsetHours(localTimezone); 
+        const selectedOffset = getOffsetHours(selectedTimezone);
+
+        if (selectedOffset === null || localOffset === null || selectedTimezone === 'wot' || selectedTimezone === 'astro') {
+            return ''; 
+        }
+
+        let diffHoursFloat = selectedOffset - localOffset;
+        const totalDiffMinutes = Math.round(diffHoursFloat * 60);
+        let diffHours = Math.trunc(totalDiffMinutes / 60);
+        let diffMins = Math.abs(totalDiffMinutes % 60);
+
+        if (diffHours === 0 && diffMins === 0) return 'Gleiche Zeit';
+
+        const absHours = Math.abs(diffHours);
+        const absMins = Math.abs(diffMins);
+        const sign = (diffHours < 0 || (diffHours === 0 && totalDiffMinutes < 0)) ? 'Zurück' : 'Voraus';
+
+        let diffParts = [];
+        if (absHours > 0) diffParts.push(`${absHours} Stunde${absHours === 1 ? '' : 'n'}`);
+        if (absMins > 0) diffParts.push(`${absMins} Minute${absMins === 1 ? '' : 'n'}`);
+
+        return `${diffParts.join(' und ')} ${sign}`;
+    }
+
+    function getUTCOffsetString(timezone) {
+      if (timezone === 'MEZ') return '(UTC+1)';
+      if (timezone === 'MESZ') return '(UTC+2)';
+      if (timezone === 'wot') return '<br>(Wahre Ortszeit)';
+      if (timezone === 'astro') return '(GMST)';
+      try {
+        const offsetString = new Date().toLocaleTimeString('en-US', { timeZone: timezone, timeZoneName: 'shortOffset' });
+        const match = offsetString.match(/(GMT|UTC)([+-]\d{1,2}(:\d{2})?)/);
+        if (match) return `(UTC${match[2]})`;
+        if (offsetString.includes('GMT') || offsetString.includes('UTC')) return '(UTC+0)';
+      } catch (e) { }
+      return '';
+    }
+
+    function updateLocalClock() {
+      const timeStringDe = new Date().toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
+      if (localClockDeElement) localClockDeElement.textContent = timeStringDe;
+    }
+    
+    function updateTimeAndDate() {
+      const now = new Date();
+      let timeString = '', dateString = '';
+      const locale = 'de-DE';
+
+      // Status für Live-Daten Hinweis aktualisieren
+      const statusDate = now.toLocaleDateString('de-DE');
+      const statusTime = now.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
+      dataStatusInfo.textContent = `Basis: Systemzeit vom ${statusDate}, ${statusTime} Uhr`;
+
+      if (selectedTimezone === 'wot') {
+        const longitude = 10.9, offsetMilliseconds = longitude * (3600 * 1000) / 15;
+        const localTime = new Date(now.getTime() + offsetMilliseconds);
+        timeString = `${String(localTime.getUTCHours()).padStart(2, '0')}:${String(localTime.getUTCMinutes()).padStart(2, '0')}:${String(localTime.getUTCSeconds()).padStart(2, '0')}`;
+        dateString = now.toLocaleDateString(locale, { weekday: 'long', day: '2-digit', month: '2-digit', year: 'numeric' });
+      } else if (selectedTimezone === 'astro') {
+        const julianDate = now.getTime() / 86400000 + 2440587.5, d = julianDate - 2451545.0;
+        let gmst = (18.697374558 + 24.06570982441908 * d) % 24;
+        if (gmst < 0) gmst += 24;
+        const hours = Math.floor(gmst), minutes = Math.floor((gmst - hours) * 60), seconds = Math.floor(((gmst - hours) * 60 - minutes) * 60);
+        const format = (v) => String(v).padStart(2, '0');
+        timeString = `${format(hours)}:${format(minutes)}:${format(seconds)}`;
+        dateString = now.toLocaleDateString(locale, { weekday: 'long', day: '2-digit', month: '2-digit', year: 'numeric' });
+      } else if (selectedTimezone === 'MEZ' || selectedTimezone === 'MESZ') {
+        const offsetHours = selectedTimezone === 'MEZ' ? 1 : 2;
+        const date = new Date(now.getTime() + (offsetHours * 60 * 60 * 1000));
+        timeString = `${String(date.getUTCHours()).padStart(2, '0')}:${String(date.getUTCMinutes()).padStart(2, '0')}:${String(date.getUTCSeconds()).padStart(2, '0')}`;
+        dateString = date.toLocaleDateString(locale, { weekday: 'long', day: '2-digit', month: '2-digit', year: 'numeric', timeZone: 'Etc/UTC' });
+      } else {
+        timeString = now.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit', second: '2-digit', timeZone: selectedTimezone, hour12: false });
+        dateString = now.toLocaleDateString(locale, { weekday: 'long', day: '2-digit', month: '2-digit', year: 'numeric', timeZone: selectedTimezone });
+      }
+
+      if (selectedCityTitleElement) selectedCityTitleElement.textContent = selectedCityName;
+      if (clockElement) clockElement.innerHTML = timeString;
+      if (dateElement) dateElement.textContent = dateString;
+      
+      const diffText = calculateTimeDifference(); 
+      const utcOffsetText = getUTCOffsetString(selectedTimezone);
+
+      if (timeDifferenceElement) timeDifferenceElement.innerHTML = `${diffText} ${utcOffsetText}`;
+    }
+    
+    // Event-Listener
+    timezoneSelectorButton.addEventListener('click', () => {
+        createModalButtons();
+        populateSearchableCitiesDropdown();
+        timezoneModal.classList.remove('hidden');
+    });
+    document.getElementById('close-modal').addEventListener('click', () => timezoneModal.classList.add('hidden'));
+
+    modalOptionsContainer.addEventListener('click', (e) => {
+        const option = e.target.closest('.modal-option');
+        if (option) {
+            saveTimezone(option.dataset.timezone, option.dataset.cityName); 
+            updateTimeAndDate();
+            timezoneModal.classList.add('hidden');
+        }
+    });
+    
+    searchableCitiesPulldown.addEventListener('change', (e) => {
+        const value = e.target.value;
+        if (value) {
+            const [newTimezone, newCityName] = value.split('|');
+            saveTimezone(newTimezone, newCityName);
+            updateTimeAndDate();
+            timezoneModal.classList.add('hidden');
+        }
+    });
+
+    setInterval(() => {
+        updateLocalClock();
+        updateTimeAndDate();
+    }, 1000);
+    updateLocalClock();
+    updateTimeAndDate();
+  </script>
+
 </body>
 </html>
