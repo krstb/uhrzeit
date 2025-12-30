@@ -1,35 +1,29 @@
-// Versionierung durch den Namen
-const CACHE_NAME = 'uhrzeit-v1.2'; // Bei Icon-Änderung: v1.2 etc.
-
-// Assets, die GitHub/MDN für die Offline-Fähigkeit empfiehlt
-const STATIC_ASSETS = [
-  '/',
+const CACHE_NAME = 'uhrzeit V2'; // Ändere v2 zu v3, v4 etc., um Updates zu erzwingen
+const ASSETS = [
   'index.html',
-  'manifest.json',
-  'icon-192.png',
-  'icon-512.png',
-  'https://cdn.tailwindcss.com' // Tailwind-CDN mitcachen!
+  'manifest.json'
 ];
 
-// Installation: Cache befüllen
+// Installation: Dateien in den Cache laden
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      console.log('SW: Pre-caching Assets');
-      return cache.addAll(STATIC_ASSETS);
+      return cache.addAll(ASSETS);
     })
   );
+  // Aktiviert den neuen Service Worker sofort, ohne auf das Schließen der App zu warten
+  self.skipWaiting();
 });
 
-// Aktivierung: Alte Caches sauber entfernen
+// Aktivierung: Alten Cache löschen, wenn die Version (CACHE_NAME) geändert wurde
 self.addEventListener('activate', (event) => {
   event.waitUntil(
-    caches.keys().then((keys) => {
+    caches.keys().then((cacheNames) => {
       return Promise.all(
-        keys.map((key) => {
-          if (key !== CACHE_NAME) {
-            console.log('SW: Lösche alten Cache', key);
-            return caches.delete(key);
+        cacheNames.map((cache) => {
+          if (cache !== CACHE_NAME) {
+            console.log('Lösche alten Cache:', cache);
+            return caches.delete(cache);
           }
         })
       );
@@ -37,21 +31,8 @@ self.addEventListener('activate', (event) => {
   );
 });
 
-// Fetch: Die "Stale-While-Revalidate" Strategie
-// (Wird oft empfohlen: Zeigt Cache sofort, aktualisiert im Hintergrund)
-self.addEventListener('fetch', (event) => {
-  event.respondWith(
-    caches.match(event.request).then((cachedResponse) => {
-      const fetchPromise = fetch(event.request).then((networkResponse) => {
-        caches.open(CACHE_NAME).then((cache) => {
-          cache.put(event.request, networkResponse.clone());
-        });
-        return networkResponse;
-      });
-      return cachedResponse || fetchPromise;
-    })
-  );
-});ler (Offline) wird der Cache genutzt
+// Strategie: Network-First
+// Versucht erst das Netzwerk, bei Fehler (Offline) wird der Cache genutzt
 self.addEventListener('fetch', (event) => {
   event.respondWith(
     fetch(event.request).catch(() => {
