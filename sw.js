@@ -1,4 +1,4 @@
-const CACHE_NAME = 'uhrzeit-v4';
+const CACHE_NAME = 'uhrzeit-v5';
 const ASSETS = [
   'index.html',
   'manifest.json',
@@ -7,42 +7,48 @@ const ASSETS = [
   'icon-512.png'
 ];
 
-// 1. Installation: Alle Dateien in den Speicher laden
+// Installation: Fehler bei einzelnen Dateien ignorieren
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      // Lädt alle oben genannten Dateien lokal auf das Gerät
-      return cache.addAll(ASSETS);
+      // Wir laden jede Datei einzeln, damit ein fehlendes Icon nicht alles stoppt
+      return Promise.allSettled(
+        ASSETS.map(url => cache.add(url))
+      );
     })
   );
-  // Aktiviert den Service Worker sofort ohne Neustart
   self.skipWaiting();
 });
 
-// 2. Aktivierung: Alten Speicher (Cache) aufräumen
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((cacheNames) => {
       return Promise.all(
         cacheNames.map((cache) => {
-          if (cache !== CACHE_NAME) {
-            console.log('Lösche alten Cache:', cache);
-            return caches.delete(cache);
-          }
+          if (cache !== CACHE_NAME) return caches.delete(cache);
         })
       );
     })
   );
+  // Zwingt den Service Worker, sofort die Kontrolle zu übernehmen
+  return self.clients.claim();
 });
 
-// 3. Abruf-Strategie: Cache-First (Wichtig für stabilen Flugmodus)
-// Diese Logik verhindert die Fehlermeldung beim Refresh im Offline-Zustand
+// Strategie: Cache-First mit Netzwerk-Fallback
 self.addEventListener('fetch', (event) => {
   event.respondWith(
     caches.match(event.request).then((response) => {
-      // Wenn die Datei im Cache gefunden wurde, liefere sie SOFORT aus
-      // Nur wenn sie nicht im Cache ist, versuche sie über das Netzwerk zu laden
-      return response || fetch(event.request);
+      // 1. Wenn im Speicher (Cache), sofort liefern
+      if (response) return response;
+
+      // 2. Wenn nicht im Speicher, Netzwerk versuchen
+      return fetch(event.request).catch(() => {
+        // 3. Wenn Flugmodus UND nicht im Speicher: Leere Antwort statt Absturz
+        if (event.request.mode === 'navigate') {
+          return caches.match('index.html');
+        }
+        return new Response('');
+      });
     })
   );
 });
