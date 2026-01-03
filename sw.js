@@ -1,4 +1,4 @@
-const CACHE_NAME = 'uhrzeit-v2';
+const CACHE_NAME = 'uhrzeit-v3';
 const ASSETS = [
   'index.html',
   'manifest.json',
@@ -7,19 +7,19 @@ const ASSETS = [
   'icon-512.png'
 ];
 
-// Installation: Dateien in den Cache laden
+// 1. Installation: Alle Dateien in den Speicher laden
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      // Wir verwenden cache.addAll, um alle wichtigen Dateien lokal zu speichern
+      // Lädt alle oben genannten Dateien lokal auf das Gerät
       return cache.addAll(ASSETS);
     })
   );
-  // Aktiviert den neuen Service Worker sofort
+  // Aktiviert den Service Worker sofort ohne Neustart
   self.skipWaiting();
 });
 
-// Aktivierung: Alten Cache löschen, wenn die Version geändert wurde
+// 2. Aktivierung: Alten Speicher (Cache) aufräumen
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((cacheNames) => {
@@ -35,12 +35,14 @@ self.addEventListener('activate', (event) => {
   );
 });
 
-// Strategie: Network-First mit Fallback auf Cache
-// Das stellt sicher, dass du immer die neueste Version hast, wenn du online bist
+// 3. Abruf-Strategie: Cache-First (Wichtig für stabilen Flugmodus)
+// Diese Logik verhindert die Fehlermeldung beim Refresh im Offline-Zustand
 self.addEventListener('fetch', (event) => {
   event.respondWith(
-    fetch(event.request).catch(() => {
-      return caches.match(event.request);
+    caches.match(event.request).then((response) => {
+      // Wenn die Datei im Cache gefunden wurde, liefere sie SOFORT aus
+      // Nur wenn sie nicht im Cache ist, versuche sie über das Netzwerk zu laden
+      return response || fetch(event.request);
     })
   );
 });
