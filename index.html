@@ -47,7 +47,7 @@
     <div class="flex flex-col items-center space-y-4 w-full">
 
       <div class="bg-white/10 backdrop-blur-sm rounded-xl p-6 shadow-lg flex flex-col items-center w-full max-w-sm md:max-w-lg">
-        <h2 class="text-xl font-bold text-white opacity-80 text-center mb-2">Lokale Zeit</h2>
+        <h2 class="text-xl font-bold text-white opacity-80 text-center mb-2">Lokale Zeit2</h2>
         <div id="local-clock-de" class="flex items-center justify-center text-6xl sm:text-7xl md:text-8xl font-extrabold font-mono tracking-wide text-white w-full tabular-nums">
         </div>
       </div>
@@ -413,12 +413,37 @@
       let timeString = '', dateString = '';
       const locale = 'de-DE';
 
-      if (selectedTimezone === 'wot') {
-        const longitude = 10.9, offsetMilliseconds = longitude * (3600 * 1000) / 15;
-        const localTime = new Date(now.getTime() + offsetMilliseconds);
-        timeString = `${String(localTime.getUTCHours()).padStart(2, '0')}:${String(localTime.getUTCMinutes()).padStart(2, '0')}:${String(localTime.getUTCSeconds()).padStart(2, '0')}`;
+            } else if (selectedTimezone === 'wot') {
+        const longitude = 10.85; // Präziser Wert für Stadtbergen
+        
+        // 1. Berechnung des Tag des Jahres
+        const now2 = new Date();
+        const start = new Date(now2.getFullYear(), 0, 0);
+        const diff = now2 - start;
+        const oneDay = 1000 * 60 * 60 * 24;
+        const dayOfYear = Math.floor(diff / oneDay);
+
+        // 2. Berechnung der Zeitgleichung (EOT) in Minuten
+        // Näherungsformel für die jahreszeitliche Schwankung der Sonnenzeit
+        const b = (2 * Math.PI * (dayOfYear - 81)) / 365;
+        const eot = 9.87 * Math.sin(2 * b) - 7.53 * Math.cos(b) - 1.5 * Math.sin(b);
+
+        // 3. Berechnung der Zeitverschiebung
+        // Längengrad-Korrektur (4 Min pro Grad) + Zeitgleichung
+        const totalCorrectionMinutes = (longitude * 4) + eot;
+        
+        // Anwendung auf UTC-Zeit
+        const utcTimestamp = now.getTime() + (now.getTimezoneOffset() * 60000);
+        const wotDate = new Date(utcTimestamp + (totalCorrectionMinutes * 60000));
+        
+        const h = String(wotDate.getHours()).padStart(2, '0');
+        const m = String(wotDate.getMinutes()).padStart(2, '0');
+        const s = String(wotDate.getSeconds()).padStart(2, '0');
+        
+        timeString = `${h}:${m}:${s}`;
         dateString = now.toLocaleDateString(locale, { weekday: 'long', day: '2-digit', month: '2-digit', year: 'numeric' });
       } else if (selectedTimezone === 'astro') {
+
         const julianDate = now.getTime() / 86400000 + 2440587.5, d = julianDate - 2451545.0;
         let gmst = (18.697374558 + 24.06570982441908 * d) % 24;
         if (gmst < 0) gmst += 24;
