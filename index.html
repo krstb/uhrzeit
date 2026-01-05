@@ -197,16 +197,16 @@
         { name: 'Peking', timezone: 'Asia/Shanghai' },
         // Kiribati Ost (Erste Zone des Tages)
         { name: 'Kiribati Ost *', timezone: KIRIBATI_OST_TZ }, 
-        // Amerikanisch-Samoa (Letzte Zone des Tages)
+        // Amerik. Samoa (Letzte Zone des Tages)
         { name: 'Amerikanisch-Samoa *', timezone: 'Pacific/Pago_Pago' }, 
         { name: 'Singapur', timezone: 'Asia/Singapore' },
         { name: 'Sydney', timezone: 'Australia/Sydney' }, 
         { name: 'Tokio', timezone: 'Asia/Tokyo' },
     ];
     const specialTimezones = [
-        { name: 'Astrozeit (Augsburg)', timezone: 'astro' }, { name: 'MEZ', timezone: 'MEZ' },
+        { name: 'Astrozeit (Stadtbergen)', timezone: 'astro' }, { name: 'MEZ', timezone: 'MEZ' },
         { name: 'MESZ', timezone: 'MESZ' }, { name: 'UTC / GMT', timezone: 'Etc/UTC' },
-        { name: 'WOZ (Augsburg)', timezone: 'wot' },
+        { name: 'WOZ (Stadtbergen)', timezone: 'wot' },
     ];
     
     geographicTimezones.sort((a, b) => a.name.localeCompare(b.name));
@@ -414,7 +414,7 @@
       const locale = 'de-DE';
 
       if (selectedTimezone === 'wot') {
-        const longitude = 10.85; 
+        const longitude = 10.839; 
         const now2 = new Date();
         const start = new Date(now2.getFullYear(), 0, 0);
         const diff = now2 - start;
@@ -427,7 +427,7 @@
         timeString = `${String(wotDate.getHours()).padStart(2, '0')}:${String(wotDate.getMinutes()).padStart(2, '0')}:${String(wotDate.getSeconds()).padStart(2, '0')}`;
         dateString = now.toLocaleDateString(locale, { weekday: 'long', day: '2-digit', month: '2-digit', year: 'numeric' });
       } else if (selectedTimezone === 'astro') {
-        const longitude = 10.85; // Stadtbergen
+        const longitude = 10.839; // Stadtbergen
         const jd = (now.getTime() / 86400000) + 2440587.5;
         const d = jd - 2451545.0;
         let gmst = (18.697374558 + 24.06570982441908 * d) % 24;
