@@ -377,7 +377,7 @@
 
         const absHours = Math.abs(diffHours);
         const absMins = Math.abs(diffMins);
-        const sign = (diffHours < 0 || (diffHours === 0 && totalDiffMinutes < 0)) ? 'Zurück' : 'Voraus';
+        const sign = (diffHours < 0 || (diffHours === 0 && totalDiffMinutes < 0)) ? 'zurück' : 'voraus';
 
         let diffParts = [];
         if (absHours > 0) diffParts.push(`${absHours} Stunde${absHours === 1 ? '' : 'n'}`);
