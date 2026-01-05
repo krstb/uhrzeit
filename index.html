@@ -204,9 +204,9 @@
         { name: 'Tokio', timezone: 'Asia/Tokyo' },
     ];
     const specialTimezones = [
-        { name: 'Astrozeit (Stadtbergen)', timezone: 'astro' }, { name: 'MEZ', timezone: 'MEZ' },
+        { name: 'Astrozeit (Stadtb.)', timezone: 'astro' }, { name: 'MEZ', timezone: 'MEZ' },
         { name: 'MESZ', timezone: 'MESZ' }, { name: 'UTC / GMT', timezone: 'Etc/UTC' },
-        { name: 'WOZ (Stadtbergen)', timezone: 'wot' },
+        { name: 'WOZ (Stadtb.)', timezone: 'wot' },
     ];
     
     geographicTimezones.sort((a, b) => a.name.localeCompare(b.name));
@@ -427,11 +427,11 @@
         timeString = `${String(wotDate.getHours()).padStart(2, '0')}:${String(wotDate.getMinutes()).padStart(2, '0')}:${String(wotDate.getSeconds()).padStart(2, '0')}`;
         dateString = now.toLocaleDateString(locale, { weekday: 'long', day: '2-digit', month: '2-digit', year: 'numeric' });
       } else if (selectedTimezone === 'astro') {
-        const longitude = 10.839; // Stadtbergen
+        const longitude = 10.839; // Stadtb.
         const jd = (now.getTime() / 86400000) + 2440587.5;
         const d = jd - 2451545.0;
         let gmst = (18.697374558 + 24.06570982441908 * d) % 24;
-        let lst = (gmst + (longitude / 15)) % 24; // Korrektur von Greenwich auf Stadtbergen
+        let lst = (gmst + (longitude / 15)) % 24; // Korrektur von Greenwich auf Stadtb.
         if (lst < 0) lst += 24;
         const h = Math.floor(lst), m = Math.floor((lst - h) * 60), s = Math.floor(((lst - h) * 60 - m) * 60);
         const f = (v) => String(v).padStart(2, '0');
