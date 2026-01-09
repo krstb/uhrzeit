@@ -1,4 +1,4 @@
-{
+ {
   "short_name": "Uhrzeit",
   "name": "Uhrzeit Weltweit",
   "description": "Berechnet Zeitzonen und besondere lokale Zeiten",
@@ -8,6 +8,12 @@
   "theme_color": "#000000",
   "background_color": "#000000",
   "icons": [
+    {
+      "src": "icon-16.png",
+      "type": "image/png",
+      "sizes": "192x192",
+      "purpose": "any maskable"
+    },
     {
       "src": "icon-192.png",
       "type": "image/png",
