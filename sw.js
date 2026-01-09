@@ -2,7 +2,6 @@ const CACHE_NAME = 'uhrzeit-v10'; // Ändere v2 zu v3, v4 etc., um Updates zu er
 const ASSETS = [
   'index.html',
   'manifest.json',
-  'favicon.png',
   'icon-192.png',
   'icon-512.png'
 ];
