@@ -1,4 +1,4 @@
-const CACHE_NAME = 'uhrzeit-12'; // Ändere die Version, um Updates zu erzwingen
+const CACHE_NAME = 'ton-v5'; 
 const ASSETS = [
   'index.html',
   'manifest.json',
@@ -6,7 +6,6 @@ const ASSETS = [
   'icon-512.png'
 ];
 
-// Installation: Dateien in den Cache laden
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
@@ -16,7 +15,6 @@ self.addEventListener('install', (event) => {
   self.skipWaiting();
 });
 
-// Aktivierung: Alten Cache löschen
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((cacheNames) => {
@@ -32,19 +30,36 @@ self.addEventListener('activate', (event) => {
   );
 });
 
-// Strategie: Stale-While-Revalidate (Optimiert für schlechten Empfang)
+// Strategie: Hybrid mit Timeout für HTML
 self.addEventListener('fetch', (event) => {
+  const url = new URL(event.request.url);
+
+  if (event.request.mode === 'navigate') {
+    event.respondWith(
+      // Timeout-Logik: Netzwerkversuch vs. 3-Sekunden-Timer
+      Promise.race([
+        fetch(event.request).then((networkResponse) => {
+          return caches.open(CACHE_NAME).then((cache) => {
+            cache.put(event.request, networkResponse.clone());
+            return networkResponse;
+          });
+        }),
+        new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('Timeout')), 3000)
+        )
+      ]).catch(() => caches.match(event.request)) // Bei Timeout oder Offline: Cache
+    );
+    return;
+  }
+
+  // Stale-While-Revalidate für alle anderen Assets (Bilder, JS, CSS)
   event.respondWith(
     caches.open(CACHE_NAME).then((cache) => {
       return cache.match(event.request).then((cachedResponse) => {
-        // Starte den Netzwerk-Request parallel
         const fetchPromise = fetch(event.request).then((networkResponse) => {
-          // Kopie der Antwort im Hintergrund in den Cache legen
           cache.put(event.request, networkResponse.clone());
           return networkResponse;
         });
-
-        // Gib sofort die Cache-Antwort zurück, falls vorhanden, sonst warte aufs Netzwerk
         return cachedResponse || fetchPromise;
       });
     })
