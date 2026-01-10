@@ -1,4 +1,4 @@
-const CACHE_NAME = 'uhrzeit-11'; // Ändere die Version, um Updates zu erzwingen
+const CACHE_NAME = 'uhrzeit-12'; // Ändere die Version, um Updates zu erzwingen
 const ASSETS = [
   'index.html',
   'manifest.json',
