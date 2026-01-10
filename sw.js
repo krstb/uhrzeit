@@ -1,4 +1,4 @@
-const CACHE_NAME = 'uhrzeit-v10'; // Ändere v2 zu v3, v4 etc., um Updates zu erzwingen
+const CACHE_NAME = 'uhrzeit-11'; // Ändere die Version, um Updates zu erzwingen
 const ASSETS = [
   'index.html',
   'manifest.json',
@@ -13,11 +13,10 @@ self.addEventListener('install', (event) => {
       return cache.addAll(ASSETS);
     })
   );
-  // Aktiviert den neuen Service Worker sofort, ohne auf das Schließen der App zu warten
   self.skipWaiting();
 });
 
-// Aktivierung: Alten Cache löschen, wenn die Version (CACHE_NAME) geändert wurde
+// Aktivierung: Alten Cache löschen
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((cacheNames) => {
@@ -33,12 +32,21 @@ self.addEventListener('activate', (event) => {
   );
 });
 
-// Strategie: Network-First
-// Versucht erst das Netzwerk, bei Fehler (Offline) wird der Cache genutzt
+// Strategie: Stale-While-Revalidate (Optimiert für schlechten Empfang)
 self.addEventListener('fetch', (event) => {
   event.respondWith(
-    fetch(event.request).catch(() => {
-      return caches.match(event.request);
+    caches.open(CACHE_NAME).then((cache) => {
+      return cache.match(event.request).then((cachedResponse) => {
+        // Starte den Netzwerk-Request parallel
+        const fetchPromise = fetch(event.request).then((networkResponse) => {
+          // Kopie der Antwort im Hintergrund in den Cache legen
+          cache.put(event.request, networkResponse.clone());
+          return networkResponse;
+        });
+
+        // Gib sofort die Cache-Antwort zurück, falls vorhanden, sonst warte aufs Netzwerk
+        return cachedResponse || fetchPromise;
+      });
     })
   );
 });
