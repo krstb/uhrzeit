@@ -490,95 +490,78 @@
     }
     
     // Event-Listener
-    timezoneSelectorButton.addEventListener('click', () => {
-        citySearchInput.value = '';
-        createModalButtons();
-        populateSearchableCitiesDropdown();
-        timezoneModal.classList.remove('hidden');
-        citySearchInput.focus();
-    });
+    timezoneSelectorButton.addEventListener('click', () => {
+        citySearchInput.value = '';
+        createModalButtons();
+        populateSearchableCitiesDropdown();
+        timezoneModal.classList.remove('hidden');
+        citySearchInput.focus();
+    });
 
-    // KORRIGIERTE LOGIK: Suche und Übernahme
-    citySearchInput.addEventListener('input', (e) => {
-        const term = e.target.value.toLowerCase();
-        const options = searchableCitiesPulldown.querySelectorAll('option:not([value=""])');
-        const groups = searchableCitiesPulldown.querySelectorAll('optgroup');
-        let firstMatch = null;
+    citySearchInput.addEventListener('input', (e) => {
+        const term = e.target.value.toLowerCase();
+        const options = searchableCitiesPulldown.querySelectorAll('option:not([value=""])');
+        const groups = searchableCitiesPulldown.querySelectorAll('optgroup');
+        let firstMatch = null;
 
-        options.forEach(opt => {
-            const matches = opt.textContent.toLowerCase().includes(term);
-            opt.style.display = matches ? '' : 'none';
-            if (matches && !firstMatch) firstMatch = opt;
-        });
+        options.forEach(opt => {
+            const matches = opt.textContent.toLowerCase().includes(term);
+            opt.style.display = matches ? '' : 'none';
+            if (matches && !firstMatch) firstMatch = opt;
+        });
 
-        groups.forEach(group => {
-            const visibleOptions = Array.from(group.querySelectorAll('option')).filter(opt => opt.style.display !== 'none');
-            group.style.display = visibleOptions.length > 0 ? '' : 'none';
-        });
+        groups.forEach(group => {
+            const visibleOptions = Array.from(group.querySelectorAll('option')).filter(opt => opt.style.display !== 'none');
+            group.style.display = visibleOptions.length > 0 ? '' : 'none';
+        });
 
-        // WICHTIG: Setzt den Wert im Hintergrund, damit Enter oder Klick funktioniert
-        if (firstMatch && term !== '') {
-            searchableCitiesPulldown.value = firstMatch.value;
-        } else if (term === '') {
-            searchableCitiesPulldown.value = '';
-        }
-    });
+        if (firstMatch && term !== '') {
+            searchableCitiesPulldown.value = firstMatch.value;
+        } else if (term === '') {
+            searchableCitiesPulldown.value = '';
+        }
+    });
 
-    // NEU: Ermöglicht das Übernehmen mit der Enter-Taste
-    citySearchInput.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') {
-            const value = searchableCitiesPulldown.value;
-            if (value) {
-                const [newTimezone, newCityName] = value.split('|');
-                saveTimezone(newTimezone, newCityName);
-                updateTimeAndDate();
-                timezoneModal.classList.add('hidden');
-            }
-        }
-    });
+    citySearchInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            const value = searchableCitiesPulldown.value;
+            if (value) {
+                const [newTimezone, newCityName] = value.split('|');
+                saveTimezone(newTimezone, newCityName);
+                updateTimeAndDate();
+                timezoneModal.classList.add('hidden');
+            }
+        }
+    });
 
-        groups.forEach(group => {
-            const visibleOptions = Array.from(group.querySelectorAll('option')).filter(opt => opt.style.display !== 'none');
-            group.style.display = visibleOptions.length > 0 ? '' : 'none';
-        });
+    document.getElementById('close-modal').addEventListener('click', () => timezoneModal.classList.add('hidden'));
 
-        // Wenn etwas gefunden wurde, wähle es im Menü aus, damit man es sofort sieht
-        if (firstMatch && term !== '') {
-            searchableCitiesPulldown.value = firstMatch.value;
-        } else if (term === '') {
-            searchableCitiesPulldown.value = '';
-        }
-    });
+    modalOptionsContainer.addEventListener('click', (e) => {
+        const option = e.target.closest('.modal-option');
+        if (option) {
+            saveTimezone(option.dataset.timezone, option.dataset.cityName); 
+            updateTimeAndDate();
+            timezoneModal.classList.add('hidden');
+        }
+    });
+    
+    searchableCitiesPulldown.addEventListener('change', (e) => {
+        const value = e.target.value;
+        if (value) {
+            const [newTimezone, newCityName] = value.split('|');
+            saveTimezone(newTimezone, newCityName);
+            updateTimeAndDate();
+            timezoneModal.classList.add('hidden');
+        }
+    });
 
-    document.getElementById('close-modal').addEventListener('click', () => timezoneModal.classList.add('hidden'));
-
-    modalOptionsContainer.addEventListener('click', (e) => {
-        const option = e.target.closest('.modal-option');
-        if (option) {
-            saveTimezone(option.dataset.timezone, option.dataset.cityName); 
-            updateTimeAndDate();
-            timezoneModal.classList.add('hidden');
-        }
-    });
-    
-    searchableCitiesPulldown.addEventListener('change', (e) => {
-        const value = e.target.value;
-        if (value) {
-            const [newTimezone, newCityName] = value.split('|');
-            saveTimezone(newTimezone, newCityName);
-            updateTimeAndDate();
-            timezoneModal.classList.add('hidden');
-        }
-    });
-
-    // Initialisierung
-    setInterval(() => {
-        updateLocalClock();
-        updateTimeAndDate();
-    }, 1000);
-    updateLocalClock();
-    updateTimeAndDate();
-  </script>
-
+    // Initialisierung
+    setInterval(() => {
+        updateLocalClock();
+        updateTimeAndDate();
+    }, 1000);
+    updateLocalClock();
+    updateTimeAndDate();
+  </script>
 </body>
 </html>
