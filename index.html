@@ -491,56 +491,76 @@
     
    // --- EVENT-LISTENER ---
 
-    // Modal öffnen
-    timezoneSelectorButton.addEventListener('click', () => {
-        citySearchInput.value = '';
-        createModalButtons();
-        populateSearchableCitiesDropdown();
-        timezoneModal.classList.remove('hidden');
-        citySearchInput.focus();
+    // Modal öffnen
+    timezoneSelectorButton.addEventListener('click', () => {
+        citySearchInput.value = '';
+        createModalButtons();
+        populateSearchableCitiesDropdown();
+        timezoneModal.classList.remove('hidden');
+        citySearchInput.focus();
+    });
+
+    // Such-Logik (Filterung des Pulldowns)
+    citySearchInput.addEventListener('input', (e) => {
+        const term = e.target.value.toLowerCase();
+        const options = searchableCitiesPulldown.querySelectorAll('option:not([value=""])');
+        const groups = searchableCitiesPulldown.querySelectorAll('optgroup');
+        let firstMatch = null;
+
+        options.forEach(opt => {
+            const matches = opt.textContent.toLowerCase().includes(term);
+            opt.style.display = matches ? '' : 'none';
+            if (matches && !firstMatch) firstMatch = opt;
+        });
+
+        groups.forEach(group => {
+            const visibleOptions = Array.from(group.querySelectorAll('option')).filter(opt => opt.style.display !== 'none');
+            group.style.display = visibleOptions.length > 0 ? '' : 'none';
+        });
+
+        if (firstMatch && term !== '') {
+            searchableCitiesPulldown.value = firstMatch.value;
+        }
+    });
+
+    function confirmSelection(value) {
+        if (value) {
+            const [newTimezone, newCityName] = value.split('|');
+            saveTimezone(newTimezone, newCityName);
+            updateTimeAndDate();
+            timezoneModal.classList.add('hidden');
+        }
+    }
+
+    // Auswahl per ENTER im Suchfeld
+    citySearchInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            // Verhindert das Neuladen der Seite, falls das in einem Formular wäre
+            e.preventDefault(); 
+            confirmSelection(searchableCitiesPulldown.value);
+        }
+    });
+
+    // WICHTIG: Das 'change' Event greift beim Dropdown, wenn man einen Eintrag wählt
+    searchableCitiesPulldown.addEventListener('change', (e) => {
+        confirmSelection(e.target.value);
     });
 
-    citySearchInput.addEventListener
+    // Auswahl über die Schnellwahl-Buttons
+    modalOptionsContainer.addEventListener('click', (e) => {
+        const option = e.target.closest('.modal-option');
+        if (option) {
+            saveTimezone(option.dataset.timezone, option.dataset.cityName); 
+            updateTimeAndDate();
+            timezoneModal.classList.add('hidden');
+        }
+    });
 
-    // Hilfsfunktion zur Übernahme (damit wir sie mehrfach nutzen können)
-    function confirmSelection(value) {
-        if (value) {
-            const [newTimezone, newCityName] = value.split('|');
-            saveTimezone(newTimezone, newCityName);
-            updateTimeAndDate();
-            timezoneModal.classList.add('hidden');
-        }
-    }
-
-    // Auswahl per ENTER im Suchfeld
-    citySearchInput.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') {
-            confirmSelection(searchableCitiesPulldown.value);
-        }
-    });
-
-    // Auswahl im Pulldown (Change für Tastatur, Click für Maus/Touch)
-    searchableCitiesPulldown.addEventListener('change', (e) => confirmSelection(e.target.value));
-    searchableCitiesPulldown.addEventListener('click', (e) => {
-        // Nur übernehmen, wenn wirklich eine Stadt (mit Value) angeklickt wurde
-        if (e.target.value) confirmSelection(e.target.value);
-    });
-
-    // Auswahl über die Schnellwahl-Buttons
-    modalOptionsContainer.addEventListener('click', (e) => {
-        const option = e.target.closest('.modal-option');
-        if (option) {
-            saveTimezone(option.dataset.timezone, option.dataset.cityName); 
-            updateTimeAndDate();
-            timezoneModal.classList.add('hidden');
-        }
-    });
-
-   // Schließen-Button
-    document.getElementById('close-modal').addEventListener('click', () => {
-        timezoneModal.classList.add('hidden');
-    });
-
+   // Schließen-Button
+    document.getElementById('close-modal').addEventListener('click', () => {
+        timezoneModal.classList.add('hidden');
+    });
+    
     // Uhren-Timer starten (Aktualisierung jede Sekunde)
     setInterval(() => {
         updateLocalClock();
