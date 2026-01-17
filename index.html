@@ -15,9 +15,11 @@
     <link rel="apple-touch-icon" href="icon-192.png">
  
     <script>
+      // Service Worker Registrierung
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
-          navigator.serviceWorker.register('sw.js').catch(err => console.log('SW Fehler:', err));
+          navigator.serviceWorker.register('sw.js')
+            .catch(err => console.log('SW Fehler:', err));
         });
       }
     </script>
@@ -25,12 +27,18 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;800&family=JetBrains+Mono:wght@400;700&display=swap');
+/* Fix für PWA-Ränder */
+    html {background-color: #000000 !important;}
     
-    /* ORIGINAL LAYOUT CSS */
-    html { background-color: #000000 !important; }
-    body { font-family: 'Inter', sans-serif; }
-    .modal-backdrop { background-color: rgba(0, 0, 0, 0.5); }
-    .tabular-nums { font-variant-numeric: tabular-nums; }
+    body {
+      font-family: 'Inter', sans-serif;
+    }
+    .modal-backdrop {
+        background-color: rgba(0, 0, 0, 0.5);
+    }
+    .tabular-nums {
+        font-variant-numeric: tabular-nums;
+    }
   </style>
 </head>
 <body class="bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 min-h-screen flex flex-col p-4">
@@ -41,18 +49,22 @@
 
       <div class="bg-white/10 backdrop-blur-sm rounded-xl p-6 shadow-lg flex flex-col items-center w-full max-w-sm md:max-w-lg">
         <h2 class="text-xl font-bold text-white opacity-80 text-center mb-2">Lokale Zeit</h2>
-        <div id="local-clock-de" class="flex items-center justify-center text-6xl sm:text-7xl md:text-8xl font-extrabold font-mono tracking-wide text-white w-full tabular-nums"></div>
+        <div id="local-clock-de" class="flex items-center justify-center text-6xl sm:text-7xl md:text-8xl font-extrabold font-mono tracking-wide text-white w-full tabular-nums">
+        </div>
       </div>
       
       <div class="flex flex-col items-center bg-white/10 backdrop-blur-sm rounded-xl p-6 shadow-lg w-full max-w-sm md:max-w-lg">
         <h2 id="selected-city-title" class="text-xl font-bold text-white opacity-80 text-center mb-2">Ausgewählte Zeit</h2>
-        <div id="clock" class="flex flex-col items-center justify-center text-6xl sm:text-7xl md:text-8xl font-extrabold font-mono tracking-wide text-white tabular-nums"></div>
-        <div id="time-difference-display" class="mt-2 text-base sm:text-lg md:text-xl font-light tracking-wide text-center text-white opacity-80"></div>
+        <div id="clock" class="flex flex-col items-center justify-center text-6xl sm:text-7xl md:text-8xl font-extrabold font-mono tracking-wide text-white tabular-nums">
+          </div>
+        <div id="time-difference-display" class="mt-2 text-base sm:text-lg md:text-xl font-light tracking-wide text-center text-white opacity-80">
+        </div>
       </div>
       
       <div class="bg-white/10 backdrop-blur-sm rounded-xl p-6 shadow-lg">
         <h2 class="text-xl font-bold text-white opacity-80 text-center mb-2">Datum</h2>
-        <div id="date-display" class="text-xl sm:text-2xl md:text-3xl font-light tracking-wide text-center text-white opacity-80 tabular-nums"></div>
+        <div id="date-display" class="text-xl sm:text-2xl md:text-3xl font-light tracking-wide text-center text-white opacity-80 tabular-nums">
+        </div>
       </div>
     </div>
 
@@ -65,25 +77,27 @@
     </div>
     
     <div id="timezone-modal" class="hidden fixed inset-0 flex items-center justify-center p-4 z-50 modal-backdrop">
-      <div class="bg-white/60 backdrop-blur-xl rounded-xl p-6 shadow-2xl flex flex-col space-y-4 max-h-[90vh] overflow-y-auto w-full max-w-[95%] sm:max-w-lg md:max-w-xl">
-        
-        <h3 class="text-2xl font-bold text-black mb-2">Zeitzone</h3>
-        
-        <div class="flex flex-col space-y-2">
-            <label for="city-search-input" class="block text-xl font-bold text-black text-center">Stadt suchen</label>
-            <input type="text" id="city-search-input" list="searchable-cities-list" placeholder="Name eingeben..." class="w-full p-3 text-lg text-black bg-white/50 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-inner" />
-            <datalist id="searchable-cities-list"></datalist>
-        </div>
+  
+  <div class="bg-white/60 backdrop-blur-xl rounded-xl p-6 shadow-2xl flex flex-col space-y-4 max-h-[90vh] overflow-y-auto w-full max-w-[95%] sm:max-w-lg md:max-w-xl">
+    
+    <h3 class="text-2xl font-bold text-black mb-2">Zeitzone</h3>
+    
+    <div class="flex flex-col space-y-2">
+        <label for="city-search-input" class="block text-xl font-bold text-black text-center">Stadt suchen</label>
+        <input type="text" id="city-search-input" list="searchable-cities-list" placeholder="Name eingeben..." class="w-full p-3 text-lg text-black bg-white/50 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-inner" />
+        <datalist id="searchable-cities-list"></datalist>
+    </div>
 
-        <div id="modal-options-container" class="flex flex-col space-y-3 pt-4 border-t border-gray-400"></div>
-        
-        <button id="close-modal" class="mt-4 text-white text-lg px-4 py-2 rounded-lg bg-red-500/50 hover:bg-red-500/70 transition-colors">Schließen</button>
+        <div id="modal-options-container" class="flex flex-col space-y-3 pt-4 border-t border-gray-400">
+          </div>
+
+        <button id="close-modal" class="mt-4 text-white text-lg px-4 py-2 rounded-lg bg-red-500/50 hover:bg-red-500/70 transition-colors duration-200">Schließen</button>
       </div>
     </div>
   </div>
 
   <script type="module">
-    // ... Logik wie zuvor (Vollständige Maps und Berechnungen) ...
+    // UI-Elemente
     const localClockDeElement = document.getElementById('local-clock-de');
     const clockElement = document.getElementById('clock');
     const timezoneSelectorButton = document.getElementById('timezone-selector-button');
@@ -95,6 +109,10 @@
     const citySearchInput = document.getElementById('city-search-input');
     const searchableCitiesList = document.getElementById('searchable-cities-list');
 
+    // Konstanten für spezielle Zeitzonen (optional, aber empfohlen für Lesbarkeit)
+    const KIRIBATI_OST_TZ = 'Pacific/Kiritimati'; 
+
+    // Erweiterte Datenbank mit Hauptstädten und Großstädten
     const cityToTimezoneMap = {
         'abu dhabi': 'Asia/Dubai', 'accra': 'Africa/Accra', 'alexandria': 'Africa/Cairo', 'algier': 'Africa/Algiers',
         'amman': 'Asia/Amman', 'amsterdam': 'Europe/Amsterdam', 'ankara': 'Europe/Istanbul', 'antananarivo': 'Indian/Antananarivo',
@@ -171,11 +189,24 @@
         'anchorage': 'America/Anchorage','lagos': 'Africa/Lagos','nuuk': 'America/Nuuk','taschkent': 'Asia/Tashkent','tel aviv': 'Asia/Jerusalem',
         'kanarische inseln': 'Atlantic/Canary', 'kiribati ost': 'Pacific/Kiritimati', 'samoa': 'Pacific/Pago_Pago',
     };
-
+    
+    // Kuratierte Liste für Buttons
     const geographicTimezones = [
         { name: 'Berlin', timezone: 'Europe/Berlin' }, 
-        { name: 'Kiribati Ost *', timezone: 'Pacific/Kiritimati' }, 
+        { name: 'Brasilia', timezone: 'America/Sao_Paulo' },
+        { name: 'Dubai', timezone: 'Asia/Dubai' }, 
+        { name: 'Kanarische Inseln', timezone: 'Atlantic/Canary' }, 
+        { name: 'London', timezone: 'Europe/London' },
+        { name: 'Los Angeles', timezone: 'America/Los_Angeles' }, 
+        { name: 'Neu-Delhi', timezone: 'Asia/Kolkata' },
+        { name: 'New York', timezone: 'America/New_York' }, 
+        { name: 'Peking', timezone: 'Asia/Shanghai' },
+        // Kiribati Ost (Erste Zone des Tages)
+        { name: 'Kiribati Ost *', timezone: KIRIBATI_OST_TZ }, 
+        // Amerik. Samoa (Letzte Zone des Tages)
         { name: 'Amerik. Samoa *', timezone: 'Pacific/Pago_Pago' }, 
+        { name: 'Singapur', timezone: 'Asia/Singapore' },
+        { name: 'Sydney', timezone: 'Australia/Sydney' }, 
         { name: 'Tokio', timezone: 'Asia/Tokyo' },
     ];
     const specialTimezones = [
@@ -183,10 +214,56 @@
         { name: 'MESZ', timezone: 'MESZ' }, { name: 'UTC / GMT', timezone: 'Etc/UTC' },
         { name: 'WOZ (Stadtb.)', timezone: 'wot' },
     ];
+    
+    geographicTimezones.sort((a, b) => a.name.localeCompare(b.name));
+    specialTimezones.sort((a, b) => a.name.localeCompare(b.name));
 
     let selectedTimezone = localStorage.getItem('selectedTimezone') || 'Europe/Berlin';
     let selectedCityName = localStorage.getItem('selectedCityName') || 'Berlin';
+    
+    function createModalButtons() {
+        modalOptionsContainer.innerHTML = '';
+        const geographicHeading = document.createElement('h4');
+        geographicHeading.className = "text-xl font-bold text-black text-center";
+        geographicHeading.textContent = "Häufige Zeitzonen";
+        modalOptionsContainer.appendChild(geographicHeading);
 
+        const geographicContainer = document.createElement('div');
+        geographicContainer.className = "grid grid-cols-1 sm:grid-cols-2 gap-2";
+        modalOptionsContainer.appendChild(geographicContainer);
+
+        geographicTimezones.forEach(option => {
+            const button = document.createElement('button');
+            button.className = "modal-option text-black text-lg px-4 py-2 rounded-lg bg-indigo-500/50 hover:bg-indigo-500/70 transition-colors duration-200";
+            button.textContent = option.name;
+            button.dataset.timezone = option.timezone;
+            button.dataset.cityName = option.name.replace(' *', ''); // Speichern des Namens ohne *
+            geographicContainer.appendChild(button);
+        });
+        
+        const separator = document.createElement('div');
+        separator.className = "w-full h-1 my-4 bg-gray-400 rounded-full";
+        modalOptionsContainer.appendChild(separator);
+        
+        const specialHeading = document.createElement('h4');
+        specialHeading.className = "text-xl font-bold text-black text-center";
+        specialHeading.textContent = "Spezielle Zeitzonen";
+        modalOptionsContainer.appendChild(specialHeading);
+
+        const specialContainer = document.createElement('div');
+        specialContainer.className = "grid grid-cols-1 sm:grid-cols-2 gap-2";
+        modalOptionsContainer.appendChild(specialContainer);
+
+        specialTimezones.forEach(option => {
+            const button = document.createElement('button');
+            button.className = "modal-option text-black text-lg px-4 py-2 rounded-lg bg-yellow-500/50 hover:bg-yellow-500/70 transition-colors duration-200";
+            button.textContent = option.name;
+            button.dataset.timezone = option.timezone;
+            button.dataset.cityName = option.name.replace(' *', '');
+            specialContainer.appendChild(button);
+        });
+    }
+    
     function populateSearchableCitiesList() {
         searchableCitiesList.innerHTML = '';
         Object.keys(cityToTimezoneMap).sort().forEach(cityKey => {
@@ -196,34 +273,6 @@
         });
     }
 
-    function createModalButtons() {
-        modalOptionsContainer.innerHTML = '';
-        const geographicContainer = document.createElement('div');
-        geographicContainer.className = "grid grid-cols-1 sm:grid-cols-2 gap-2";
-        modalOptionsContainer.appendChild(geographicContainer);
-        geographicTimezones.forEach(option => {
-            const button = document.createElement('button');
-            button.className = "modal-option text-black text-lg px-4 py-2 rounded-lg bg-indigo-500/50 hover:bg-indigo-500/70 transition-colors";
-            button.textContent = option.name;
-            button.dataset.timezone = option.timezone;
-            button.dataset.cityName = option.name.replace(' *', '');
-            geographicContainer.appendChild(button);
-        });
-        const separator = document.createElement('div');
-        separator.className = "w-full h-1 my-4 bg-gray-400 rounded-full";
-        modalOptionsContainer.appendChild(separator);
-        const specialContainer = document.createElement('div');
-        specialContainer.className = "grid grid-cols-1 sm:grid-cols-2 gap-2";
-        modalOptionsContainer.appendChild(specialContainer);
-        specialTimezones.forEach(option => {
-            const button = document.createElement('button');
-            button.className = "modal-option text-black text-lg px-4 py-2 rounded-lg bg-yellow-500/50 hover:bg-yellow-500/70 transition-colors";
-            button.textContent = option.name;
-            button.dataset.timezone = option.timezone;
-            button.dataset.cityName = option.name.replace(' *', '');
-            specialContainer.appendChild(button);
-        });
-    }
 
     function saveTimezone(timezone, cityName) {
         localStorage.setItem('selectedTimezone', timezone);
@@ -231,49 +280,109 @@
         selectedTimezone = timezone;
         selectedCityName = cityName;
     }
-
+    
+    // KORRIGIERTE FUNKTION: Ermittelt den aktuellen UTC-Offset in Stunden (robustere IANA-Erkennung)
     function getOffsetHours(timezone) {
+        // Manuelle Offsets beibehalten:
         if (timezone === 'MEZ') return 1;
         if (timezone === 'MESZ') return 2;
-        if (timezone === 'wot' || timezone === 'astro') return null;
+        if (timezone === 'wot' || timezone === 'astro') return null; // Keine Stunden-Differenz
+        
+        // Fallback für lokale Zeitzone (sollte den Offset über IANA-Abfrage im try-Block ermitteln)
+        if (timezone === Intl.DateTimeFormat().resolvedOptions().timeZone) {
+             // Wenn Intl nicht funktioniert, der manuelle Browser-Offset
+             try {
+                // Versucht, den Offset dynamisch zu ermitteln, bevor auf getTimezoneOffset zurückgegriffen wird
+                return getOffsetHoursDynamic(timezone); 
+             } catch (e) {
+                return new Date().getTimezoneOffset() / -60;
+             }
+        }
+
+        // Dynamische IANA-Abfrage für alle anderen Zeitzonen
         return getOffsetHoursDynamic(timezone);
     }
     
     function getOffsetHoursDynamic(timezone) {
         try {
             const date = new Date();
-            const formatter = new Intl.DateTimeFormat('en-US', { timeZone: timezone, timeZoneName: 'shortOffset', hour: '2-digit' });
+            const formatter = new Intl.DateTimeFormat('en-US', {
+                timeZone: timezone,
+                timeZoneName: 'shortOffset',
+                hour: '2-digit'
+            });
+            
             const parts = formatter.formatToParts(date);
+            // Sucht nach dem Zeitzonen-Namen, der GMT/UTC enthält
             const offsetPart = parts.find(p => p.type === 'timeZoneName' && (p.value.startsWith('GMT') || p.value.startsWith('UTC')));
+            
             if (offsetPart) {
-                const match = offsetPart.value.match(/([+-]\d{1,2}(:\d{2})?)/);
+                const offsetString = offsetPart.value;
+                // Extrahiert den numerischen Offset-Teil
+                const match = offsetString.match(/([+-]\d{1,2}(:\d{2})?)/);
+
                 if (match) {
                     const offset = match[1];
                     if (offset.includes(':')) {
-                        const p = offset.match(/([+-])(\d{1,2}):(\d{2})/);
-                        return p ? (p[1] === '-' ? -1 : 1) * (Number(p[2]) + Number(p[3]) / 60) : null;
+                        // Behandelt Minuten-Offsets (z.B. +5:30)
+                        const parts = offset.match(/([+-])(\d{1,2}):(\d{2})/);
+                        if (parts) {
+                            const sign = parts[1] === '-' ? -1 : 1;
+                            const h = Number(parts[2]);
+                            const m = Number(parts[3]);
+                            return sign * (h + m / 60);
+                        }
                     }
+                    // Fängt einfache Offsets wie +10 oder -5 ab
                     return Number(offset);
                 } 
-                return 0;
+                
+                // Wenn der String nur "GMT" oder "UTC" ist (Offset 0)
+                if (offsetString === 'GMT' || offsetString === 'UTC' || offsetString === 'Z') {
+                    return 0;
+                }
             }
-        } catch (e) { console.error(e); }
-        return null;
+        } catch (e) {
+            console.error(`Fehler bei der Offset-Ermittlung für ${timezone}:`, e);
+        }
+        
+        return null; // Wenn alles fehlschlägt
     }
 
+    // Funktion: Berechnet die Differenz basierend auf den UTC-Offsets
     function calculateTimeDifference() {
-        const localOffset = getOffsetHours(Intl.DateTimeFormat().resolvedOptions().timeZone); 
+        // Sicherstellen, dass die lokale Zeitzone als IANA-String vorliegt
+        const localTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone; 
+        
+        // Ruft den dynamischen Offset von der lokalen Zeitzone ab (z.B. 1 für MEZ)
+        const localOffset = getOffsetHours(localTimezone); 
+        
+        // Ruft den dynamischen Offset der ausgewählten Zeitzone ab (z.B. 0 für London/GMT)
         const selectedOffset = getOffsetHours(selectedTimezone);
-        if (selectedOffset === null || localOffset === null) return '';
-        const totalDiffMinutes = Math.round((selectedOffset - localOffset) * 60);
-        if (totalDiffMinutes === 0) return 'Gleiche Zeit';
-        const absHours = Math.floor(Math.abs(totalDiffMinutes) / 60);
-        const absMins = Math.abs(totalDiffMinutes) % 60;
-        const sign = totalDiffMinutes < 0 ? 'zurück' : 'voraus';
-        let parts = [];
-        if (absHours > 0) parts.push(`${absHours} Stunde${absHours === 1 ? '' : 'n'}`);
-        if (absMins > 0) parts.push(`${absMins} Minute${absMins === 1 ? '' : 'n'}`);
-        return `${parts.join(' und ')} ${sign}`;
+
+        if (selectedOffset === null || localOffset === null || selectedTimezone === 'wot' || selectedTimezone === 'astro') {
+            return ''; // Keine Differenzangabe für spezielle oder unbekannte Zonen
+        }
+
+        let diffHoursFloat = selectedOffset - localOffset;
+
+        // Führt eine Rundung auf die nächste Minute durch, um Fließkommafehler zu vermeiden
+        const totalDiffMinutes = Math.round(diffHoursFloat * 60);
+        
+        let diffHours = Math.trunc(totalDiffMinutes / 60);
+        let diffMins = Math.abs(totalDiffMinutes % 60);
+
+        if (diffHours === 0 && diffMins === 0) return 'Gleiche Zeit';
+
+        const absHours = Math.abs(diffHours);
+        const absMins = Math.abs(diffMins);
+        const sign = (diffHours < 0 || (diffHours === 0 && totalDiffMinutes < 0)) ? 'zurück' : 'voraus';
+
+        let diffParts = [];
+        if (absHours > 0) diffParts.push(`${absHours} Stunde${absHours === 1 ? '' : 'n'}`);
+        if (absMins > 0) diffParts.push(`${absMins} Minute${absMins === 1 ? '' : 'n'}`);
+
+        return `${diffParts.join(' und ')} ${sign}`;
     }
 
     function getUTCOffsetString(timezone) {
@@ -281,17 +390,23 @@
       if (timezone === 'MESZ') return '(UTC+2)';
       if (timezone === 'wot') return '<br>(Wahre Ortszeit)';
       if (timezone === 'astro') return '(GMST)';
+      // Dynamische Abfrage für alle IANA-Zonen
       try {
-        const os = new Date().toLocaleTimeString('en-US', { timeZone: timezone, timeZoneName: 'shortOffset' });
-        const m = os.match(/(GMT|UTC)([+-]\d{1,2}(:\d{2})?)/);
-        return m ? `(UTC${m[2]})` : '';
-      } catch (e) { return ''; }
+        const offsetString = new Date().toLocaleTimeString('en-US', { timeZone: timezone, timeZoneName: 'shortOffset' });
+        const match = offsetString.match(/(GMT|UTC)([+-]\d{1,2}(:\d{2})?)/);
+        if (match) return `(UTC${match[2]})`;
+        // Wenn kein numerischer Offset, aber 'GMT' oder 'UTC' angezeigt wird
+        if (offsetString.includes('GMT') || offsetString.includes('UTC')) return '(UTC+0)';
+      } catch (e) { /* Fehler ignorieren */ }
+      return '';
     }
 
     function updateLocalClock() {
-      localClockDeElement.textContent = new Date().toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
+      const timeStringDe = new Date().toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
+      if (localClockDeElement) localClockDeElement.textContent = timeStringDe;
     }
-
+    
+    // KORRIGIERTE FUNKTION: Entfernt die manuelle Berechnung für Pacific/Kiritimati
     function updateTimeAndDate() {
       const now = new Date();
       let timeString = '', dateString = '';
@@ -299,33 +414,49 @@
 
       if (selectedTimezone === 'wot') {
         const longitude = 10.839; 
-        const start = new Date(now.getFullYear(), 0, 0);
-        const eot = 9.87 * Math.sin(2 * (2 * Math.PI * (Math.floor((now - start) / 86400000) - 81)) / 365) - 7.53 * Math.cos((2 * Math.PI * (Math.floor((now - start) / 86400000) - 81)) / 365) - 1.5 * Math.sin((2 * Math.PI * (Math.floor((now - start) / 86400000) - 81)) / 365);
-        const wotDate = new Date(now.getTime() + (now.getTimezoneOffset() * 60000) + ((longitude * 4) + eot) * 60000);
-        timeString = wotDate.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+        const now2 = new Date();
+        const start = new Date(now2.getFullYear(), 0, 0);
+        const diff = now2 - start;
+        const dayOfYear = Math.floor(diff / (1000 * 60 * 60 * 24));
+        const b = (2 * Math.PI * (dayOfYear - 81)) / 365;
+        const eot = 9.87 * Math.sin(2 * b) - 7.53 * Math.cos(b) - 1.5 * Math.sin(b);
+        const totalCorrectionMinutes = (longitude * 4) + eot;
+        const utcTimestamp = now.getTime() + (now.getTimezoneOffset() * 60000);
+        const wotDate = new Date(utcTimestamp + (totalCorrectionMinutes * 60000));
+        timeString = `${String(wotDate.getHours()).padStart(2, '0')}:${String(wotDate.getMinutes()).padStart(2, '0')}:${String(wotDate.getSeconds()).padStart(2, '0')}`;
         dateString = now.toLocaleDateString(locale, { weekday: 'long', day: '2-digit', month: '2-digit', year: 'numeric' });
       } else if (selectedTimezone === 'astro') {
-        const longitude = 10.839; 
-        let lst = ((18.697374558 + 24.06570982441908 * ((now.getTime() / 86400000) + 2440587.5 - 2451545.0)) % 24 + (longitude / 15)) % 24;
+        const longitude = 10.839; // Stadtbergen
+        const jd = (now.getTime() / 86400000) + 2440587.5;
+        const d = jd - 2451545.0;
+        let gmst = (18.697374558 + 24.06570982441908 * d) % 24;
+        let lst = (gmst + (longitude / 15)) % 24; // Korrektur von Greenwich auf Stadtbergen
         if (lst < 0) lst += 24;
         const h = Math.floor(lst), m = Math.floor((lst - h) * 60), s = Math.floor(((lst - h) * 60 - m) * 60);
-        timeString = `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+        const f = (v) => String(v).padStart(2, '0');
+        timeString = `${f(h)}:${f(m)}:${f(s)}`;
         dateString = now.toLocaleDateString(locale, { weekday: 'long', day: '2-digit', month: '2-digit', year: 'numeric' });
       } else if (selectedTimezone === 'MEZ' || selectedTimezone === 'MESZ') {
-        const d = new Date(now.getTime() + (selectedTimezone === 'MEZ' ? 1 : 2) * 3600000 + (now.getTimezoneOffset() * 60000));
-        timeString = d.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-        dateString = d.toLocaleDateString(locale, { weekday: 'long', day: '2-digit', month: '2-digit', year: 'numeric' });
+        const offsetHours = selectedTimezone === 'MEZ' ? 1 : 2;
+        const date = new Date(now.getTime() + (offsetHours * 60 * 60 * 1000));
+        timeString = `${String(date.getUTCHours()).padStart(2, '0')}:${String(date.getUTCMinutes()).padStart(2, '0')}:${String(date.getUTCSeconds()).padStart(2, '0')}`;
+        dateString = date.toLocaleDateString(locale, { weekday: 'long', day: '2-digit', month: '2-digit', year: 'numeric', timeZone: 'Etc/UTC' });
       } else {
         timeString = now.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit', second: '2-digit', timeZone: selectedTimezone, hour12: false });
         dateString = now.toLocaleDateString(locale, { weekday: 'long', day: '2-digit', month: '2-digit', year: 'numeric', timeZone: selectedTimezone });
       }
 
-      selectedCityTitleElement.textContent = selectedCityName;
-      clockElement.textContent = timeString;
-      dateElement.textContent = dateString;
-      timeDifferenceElement.innerHTML = `${calculateTimeDifference()} ${getUTCOffsetString(selectedTimezone)}`;
-    }
+      if (selectedCityTitleElement) selectedCityTitleElement.textContent = selectedCityName;
+      if (clockElement) clockElement.innerHTML = timeString;
+      if (dateElement) dateElement.textContent = dateString;
+      
+      const diffText = calculateTimeDifference(); 
+      const utcOffsetText = getUTCOffsetString(selectedTimezone);
 
+      if (timeDifferenceElement) timeDifferenceElement.innerHTML = `${diffText} ${utcOffsetText}`;
+    }
+    
+    // Event-Listener
     timezoneSelectorButton.addEventListener('click', () => {
         citySearchInput.value = '';
         createModalButtons();
@@ -333,26 +464,39 @@
         timezoneModal.classList.remove('hidden');
         citySearchInput.focus();
     });
-
+    
     citySearchInput.addEventListener('input', (e) => {
         const val = e.target.value.toLowerCase();
         if (cityToTimezoneMap[val]) {
             saveTimezone(cityToTimezoneMap[val], e.target.value);
             updateTimeAndDate();
-            setTimeout(() => { timezoneModal.classList.add('hidden'); citySearchInput.value = ''; }, 300);
+            setTimeout(() => { 
+                timezoneModal.classList.add('hidden'); 
+                citySearchInput.value = ''; 
+            }, 300);
         }
-    });
-
-    modalOptionsContainer.addEventListener('click', (e) => {
-        const btn = e.target.closest('.modal-option');
-        if (btn) { saveTimezone(btn.dataset.timezone, btn.dataset.cityName); updateTimeAndDate(); timezoneModal.classList.add('hidden'); }
     });
 
     document.getElementById('close-modal').addEventListener('click', () => timezoneModal.classList.add('hidden'));
 
-    setInterval(() => { updateLocalClock(); updateTimeAndDate(); }, 1000);
+    modalOptionsContainer.addEventListener('click', (e) => {
+        const option = e.target.closest('.modal-option');
+        if (option) {
+            // Entfernt das Sternchen, bevor der Name gespeichert wird
+            saveTimezone(option.dataset.timezone, option.dataset.cityName); 
+            updateTimeAndDate();
+            timezoneModal.classList.add('hidden');
+        }
+    });
+
+    // Initialisierung
+    setInterval(() => {
+        updateLocalClock();
+        updateTimeAndDate();
+    }, 1000);
     updateLocalClock();
     updateTimeAndDate();
   </script>
+
 </body>
 </html>
