@@ -82,13 +82,13 @@
     
     <h3 class="text-2xl font-bold text-black mb-2">Zeitzone</h3>
     
-<div>
-    <label for="searchable-cities-pulldown" class="block text-xl font-bold text-black text-center mb-2">Stadt wählen</label>
-    <input type="text" id="city-search-input" placeholder="Stadt suchen..." class="w-full p-2 mb-2 text-lg text-black bg-white/80 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" />
-    
-    <select id="searchable-cities-pulldown" class="w-full p-2 text-lg text-black bg-white/50 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
-    </select>
-</div>
+    <div class="flex flex-col space-y-2">
+        <label for="city-search-input" class="block text-xl font-bold text-black text-center">Stadt suchen</label>
+        <input type="text" id="city-search-input" placeholder="Name eingeben..." class="w-full p-3 text-lg text-black bg-white rounded-lg border-2 border-indigo-300 focus:outline-none focus:border-indigo-500 shadow-inner" />
+        
+        <select id="searchable-cities-pulldown" class="w-full p-2 text-lg text-black bg-white/50 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+        </select>
+    </div>
 
         <div id="modal-options-container" class="flex flex-col space-y-3 pt-4 border-t border-gray-400">
           </div>
@@ -109,6 +109,7 @@
     const timeDifferenceElement = document.getElementById('time-difference-display');
     const modalOptionsContainer = document.getElementById('modal-options-container');
     const searchableCitiesPulldown = document.getElementById('searchable-cities-pulldown');
+    const citySearchInput = document.getElementById('city-search-input');
 
     // Konstanten für spezielle Zeitzonen (optional, aber empfohlen für Lesbarkeit)
     const KIRIBATI_OST_TZ = 'Pacific/Kiritimati'; 
@@ -489,16 +490,44 @@
     
     // Event-Listener
     timezoneSelectorButton.addEventListener('click', () => {
+        citySearchInput.value = '';
         createModalButtons();
         populateSearchableCitiesDropdown();
         timezoneModal.classList.remove('hidden');
+        citySearchInput.focus();
     });
+
+    // NEU: Logik für die Echtzeit-Suche
+    citySearchInput.addEventListener('input', (e) => {
+        const term = e.target.value.toLowerCase();
+        const options = searchableCitiesPulldown.querySelectorAll('option:not([value=""])');
+        const groups = searchableCitiesPulldown.querySelectorAll('optgroup');
+        let firstMatch = null;
+
+        options.forEach(opt => {
+            const matches = opt.textContent.toLowerCase().includes(term);
+            opt.style.display = matches ? '' : 'none';
+            if (matches && !firstMatch) firstMatch = opt;
+        });
+
+        groups.forEach(group => {
+            const visibleOptions = Array.from(group.querySelectorAll('option')).filter(opt => opt.style.display !== 'none');
+            group.style.display = visibleOptions.length > 0 ? '' : 'none';
+        });
+
+        // Wenn etwas gefunden wurde, wähle es im Menü aus, damit man es sofort sieht
+        if (firstMatch && term !== '') {
+            searchableCitiesPulldown.value = firstMatch.value;
+        } else if (term === '') {
+            searchableCitiesPulldown.value = '';
+        }
+    });
+
     document.getElementById('close-modal').addEventListener('click', () => timezoneModal.classList.add('hidden'));
 
     modalOptionsContainer.addEventListener('click', (e) => {
         const option = e.target.closest('.modal-option');
         if (option) {
-            // Entfernt das Sternchen, bevor der Name gespeichert wird
             saveTimezone(option.dataset.timezone, option.dataset.cityName); 
             updateTimeAndDate();
             timezoneModal.classList.add('hidden');
