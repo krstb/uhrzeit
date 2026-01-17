@@ -27,7 +27,7 @@
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;800&family=JetBrains+Mono:wght@400;700&display=swap');
     html {background-color: #000000 !important;}
     body { font-family: 'Inter', sans-serif; }
-    .modal-backdrop { background-color: rgba(0, 0, 0, 0.8); }
+    .modal-backdrop { background-color: rgba(0, 0, 0, 0.5); }
     .tabular-nums { font-variant-numeric: tabular-nums; }
   </style>
 </head>
@@ -35,47 +35,46 @@
 
   <div class="flex flex-col items-center space-y-6 w-full mt-4">
     <div class="flex flex-col items-center space-y-4 w-full">
-      <div class="bg-indigo-900 rounded-xl p-6 shadow-lg flex flex-col items-center w-full max-w-sm md:max-w-lg">
+      <div class="bg-white/10 backdrop-blur-sm rounded-xl p-6 shadow-lg flex flex-col items-center w-full max-w-sm md:max-w-lg">
         <h2 class="text-xl font-bold text-white opacity-80 text-center mb-2">Lokale Zeit</h2>
         <div id="local-clock-de" class="flex items-center justify-center text-6xl sm:text-7xl md:text-8xl font-extrabold font-mono tracking-wide text-white w-full tabular-nums"></div>
       </div>
       
-      <div class="flex flex-col items-center bg-indigo-900 rounded-xl p-6 shadow-lg w-full max-w-sm md:max-w-lg">
+      <div class="flex flex-col items-center bg-white/10 backdrop-blur-sm rounded-xl p-6 shadow-lg w-full max-w-sm md:max-w-lg">
         <h2 id="selected-city-title" class="text-xl font-bold text-white opacity-80 text-center mb-2">Ausgewählte Zeit</h2>
         <div id="clock" class="flex flex-col items-center justify-center text-6xl sm:text-7xl md:text-8xl font-extrabold font-mono tracking-wide text-white tabular-nums"></div>
         <div id="time-difference-display" class="mt-2 text-base sm:text-lg md:text-xl font-light tracking-wide text-center text-white opacity-80"></div>
       </div>
       
-      <div class="bg-indigo-900 rounded-xl p-6 shadow-lg">
+      <div class="bg-white/10 backdrop-blur-sm rounded-xl p-6 shadow-lg">
         <h2 class="text-xl font-bold text-white opacity-80 text-center mb-2">Datum</h2>
         <div id="date-display" class="text-xl sm:text-2xl md:text-3xl font-light tracking-wide text-center text-white opacity-80 tabular-nums"></div>
       </div>
     </div>
 
-    <button id="timezone-selector-button" class="text-white p-3 rounded-full bg-indigo-700 hover:bg-indigo-600 transition-colors duration-200 flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-white/50 shadow-lg">
+    <button id="timezone-selector-button" class="text-white p-3 rounded-full bg-white/20 hover:bg-white/30 transition-colors duration-200 flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-white/50">
         <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
           <path stroke-linecap="round" stroke-linejoin="round" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m0 0a9 9 0 019-9m-9 9a9 9 0 009 9" />
         </svg>
     </button>
     
     <div id="timezone-modal" class="hidden fixed inset-0 flex items-center justify-center p-4 z-50 modal-backdrop">
-      <div class="bg-white rounded-xl p-6 shadow-2xl flex flex-col space-y-4 max-h-[90vh] overflow-y-auto w-full max-w-[95%] sm:max-w-lg md:max-w-xl">
+      <div class="bg-white/60 backdrop-blur-xl rounded-xl p-6 shadow-2xl flex flex-col space-y-4 max-h-[90vh] overflow-y-auto w-full max-w-[95%] sm:max-w-lg md:max-w-xl">
         <h3 class="text-2xl font-bold text-black mb-2">Zeitzone</h3>
         
         <div class="flex flex-col space-y-2">
             <label for="city-search-input" class="block text-xl font-bold text-black text-center">Stadt suchen</label>
-            <input type="text" id="city-search-input" list="searchable-cities-list" placeholder="Name eingeben..." class="w-full p-3 text-lg text-black bg-gray-100 rounded-lg border-2 border-indigo-300 focus:outline-none focus:border-indigo-500 shadow-inner" />
+            <input type="text" id="city-search-input" list="searchable-cities-list" placeholder="Name eingeben..." class="w-full p-3 text-lg text-black bg-white rounded-lg border-2 border-indigo-300 focus:outline-none focus:border-indigo-500 shadow-inner" />
             <datalist id="searchable-cities-list"></datalist>
         </div>
 
-        <div id="modal-options-container" class="flex flex-col space-y-3 pt-4 border-t border-gray-300"></div>
-        <button id="close-modal" class="mt-4 text-white text-lg px-4 py-2 rounded-lg bg-red-600 hover:bg-red-700 shadow-md">Schließen</button>
+        <div id="modal-options-container" class="flex flex-col space-y-3 pt-4 border-t border-gray-400"></div>
+        <button id="close-modal" class="mt-4 text-white text-lg px-4 py-2 rounded-lg bg-red-500/50 hover:bg-red-500/70">Schließen</button>
       </div>
     </div>
   </div>
 
   <script type="module">
-    // (JavaScript Logik identisch zur vorherigen Version mit ausführlicher Berechnung)
     const localClockDeElement = document.getElementById('local-clock-de');
     const clockElement = document.getElementById('clock');
     const timezoneSelectorButton = document.getElementById('timezone-selector-button');
@@ -165,13 +164,20 @@
     };
 
     const geographicTimezones = [
-        { name: 'Berlin', timezone: 'Europe/Berlin' }, { name: 'Brasilia', timezone: 'America/Sao_Paulo' },
-        { name: 'Dubai', timezone: 'Asia/Dubai' }, { name: 'Kanarische Inseln', timezone: 'Atlantic/Canary' }, 
-        { name: 'London', timezone: 'Europe/London' }, { name: 'Los Angeles', timezone: 'America/Los_Angeles' }, 
-        { name: 'Neu-Delhi', timezone: 'Asia/Kolkata' }, { name: 'New York', timezone: 'America/New_York' }, 
-        { name: 'Peking', timezone: 'Asia/Shanghai' }, { name: 'Kiribati Ost *', timezone: 'Pacific/Kiritimati' }, 
-        { name: 'Amerik. Samoa *', timezone: 'Pacific/Pago_Pago' }, { name: 'Singapur', timezone: 'Asia/Singapore' },
-        { name: 'Sydney', timezone: 'Australia/Sydney' }, { name: 'Tokio', timezone: 'Asia/Tokyo' },
+        { name: 'Berlin', timezone: 'Europe/Berlin' }, 
+        { name: 'Brasilia', timezone: 'America/Sao_Paulo' },
+        { name: 'Dubai', timezone: 'Asia/Dubai' }, 
+        { name: 'Kanarische Inseln', timezone: 'Atlantic/Canary' }, 
+        { name: 'London', timezone: 'Europe/London' },
+        { name: 'Los Angeles', timezone: 'America/Los_Angeles' }, 
+        { name: 'Neu-Delhi', timezone: 'Asia/Kolkata' },
+        { name: 'New York', timezone: 'America/New_York' }, 
+        { name: 'Peking', timezone: 'Asia/Shanghai' },
+        { name: 'Kiribati Ost *', timezone: 'Pacific/Kiritimati' }, 
+        { name: 'Amerik. Samoa *', timezone: 'Pacific/Pago_Pago' }, 
+        { name: 'Singapur', timezone: 'Asia/Singapore' },
+        { name: 'Sydney', timezone: 'Australia/Sydney' }, 
+        { name: 'Tokio', timezone: 'Asia/Tokyo' },
     ];
     const specialTimezones = [
         { name: 'Astrozeit (Stadtb.)', timezone: 'astro' }, { name: 'MEZ', timezone: 'MEZ' },
@@ -204,7 +210,7 @@
 
         geographicTimezones.forEach(option => {
             const button = document.createElement('button');
-            button.className = "modal-option text-white text-lg px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 transition-colors duration-200 shadow";
+            button.className = "modal-option text-black text-lg px-4 py-2 rounded-lg bg-indigo-500/50 hover:bg-indigo-500/70 transition-colors duration-200";
             button.textContent = option.name;
             button.dataset.timezone = option.timezone;
             button.dataset.cityName = option.name.replace(' *', '');
@@ -212,7 +218,7 @@
         });
         
         const separator = document.createElement('div');
-        separator.className = "w-full h-px my-4 bg-gray-300";
+        separator.className = "w-full h-1 my-4 bg-gray-400 rounded-full";
         modalOptionsContainer.appendChild(separator);
         
         const specialHeading = document.createElement('h4');
@@ -226,7 +232,7 @@
 
         specialTimezones.forEach(option => {
             const button = document.createElement('button');
-            button.className = "modal-option text-black text-lg px-4 py-2 rounded-lg bg-yellow-500 hover:bg-yellow-600 transition-colors duration-200 shadow";
+            button.className = "modal-option text-black text-lg px-4 py-2 rounded-lg bg-yellow-500/50 hover:bg-yellow-500/70 transition-colors duration-200";
             button.textContent = option.name;
             button.dataset.timezone = option.timezone;
             button.dataset.cityName = option.name.replace(' *', '');
@@ -241,6 +247,22 @@
         selectedCityName = cityName;
     }
 
+    // WIEDERHERGESTELLTE AUSFÜHRLICHE LOGIK
+    function getOffsetHours(timezone) {
+        if (timezone === 'MEZ') return 1;
+        if (timezone === 'MESZ') return 2;
+        if (timezone === 'wot' || timezone === 'astro') return null;
+        
+        if (timezone === Intl.DateTimeFormat().resolvedOptions().timeZone) {
+             try {
+                return getOffsetHoursDynamic(timezone); 
+             } catch (e) {
+                return new Date().getTimezoneOffset() / -60;
+             }
+        }
+        return getOffsetHoursDynamic(timezone);
+    }
+    
     function getOffsetHoursDynamic(timezone) {
         try {
             const date = new Date();
@@ -249,98 +271,131 @@
                 timeZoneName: 'shortOffset',
                 hour: '2-digit'
             });
+            
             const parts = formatter.formatToParts(date);
-            const offsetPart = parts.find(p => p.type === 'timeZoneName');
+            const offsetPart = parts.find(p => p.type === 'timeZoneName' && (p.value.startsWith('GMT') || p.value.startsWith('UTC')));
+            
             if (offsetPart) {
                 const offsetString = offsetPart.value;
                 const match = offsetString.match(/([+-]\d{1,2}(:\d{2})?)/);
+
                 if (match) {
                     const offset = match[1];
                     if (offset.includes(':')) {
                         const parts = offset.match(/([+-])(\d{1,2}):(\d{2})/);
                         if (parts) {
                             const sign = parts[1] === '-' ? -1 : 1;
-                            return sign * (Number(parts[2]) + Number(parts[3]) / 60);
+                            const h = Number(parts[2]);
+                            const m = Number(parts[3]);
+                            return sign * (h + m / 60);
                         }
                     }
                     return Number(offset);
                 } 
-                if (offsetString === 'GMT' || offsetString === 'UTC') return 0;
+                if (offsetString === 'GMT' || offsetString === 'UTC' || offsetString === 'Z') {
+                    return 0;
+                }
             }
-        } catch (e) { console.error(e); }
+        } catch (e) {
+            console.error(`Fehler bei der Offset-Ermittlung für ${timezone}:`, e);
+        }
         return null;
     }
 
     function calculateTimeDifference() {
-        const localOffset = getOffsetHoursDynamic(Intl.DateTimeFormat().resolvedOptions().timeZone); 
-        let selectedOffset;
-        if (selectedTimezone === 'MEZ') selectedOffset = 1;
-        else if (selectedTimezone === 'MESZ') selectedOffset = 2;
-        else selectedOffset = getOffsetHoursDynamic(selectedTimezone);
+        const localTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone; 
+        const localOffset = getOffsetHours(localTimezone); 
+        const selectedOffset = getOffsetHours(selectedTimezone);
 
-        if (selectedOffset === null || localOffset === null) return '';
-        const totalDiffMinutes = Math.round((selectedOffset - localOffset) * 60);
-        if (totalDiffMinutes === 0) return 'Gleiche Zeit';
-        const absHours = Math.floor(Math.abs(totalDiffMinutes) / 60);
-        const absMins = Math.abs(totalDiffMinutes) % 60;
-        const sign = totalDiffMinutes < 0 ? 'zurück' : 'voraus';
-        let parts = [];
-        if (absHours > 0) parts.push(`${absHours} Std.`);
-        if (absMins > 0) parts.push(`${absMins} Min.`);
-        return `${parts.join(' ')} ${sign}`;
+        if (selectedOffset === null || localOffset === null || selectedTimezone === 'wot' || selectedTimezone === 'astro') {
+            return ''; 
+        }
+
+        let diffHoursFloat = selectedOffset - localOffset;
+        const totalDiffMinutes = Math.round(diffHoursFloat * 60);
+        
+        let diffHours = Math.trunc(totalDiffMinutes / 60);
+        let diffMins = Math.abs(totalDiffMinutes % 60);
+
+        if (diffHours === 0 && diffMins === 0) return 'Gleiche Zeit';
+
+        const absHours = Math.abs(diffHours);
+        const absMins = Math.abs(diffMins);
+        const sign = (diffHours < 0 || (diffHours === 0 && totalDiffMinutes < 0)) ? 'zurück' : 'voraus';
+
+        let diffParts = [];
+        if (absHours > 0) diffParts.push(`${absHours} Stunde${absHours === 1 ? '' : 'n'}`);
+        if (absMins > 0) diffParts.push(`${absMins} Minute${absMins === 1 ? '' : 'n'}`);
+
+        return `${diffParts.join(' und ')} ${sign}`;
     }
 
     function getUTCOffsetString(timezone) {
       if (timezone === 'MEZ') return '(UTC+1)';
       if (timezone === 'MESZ') return '(UTC+2)';
-      if (selectedTimezone === 'wot') return '<br>(Wahre Ortszeit)';
-      if (selectedTimezone === 'astro') return '(GMST)';
+      if (timezone === 'wot') return '<br>(Wahre Ortszeit)';
+      if (timezone === 'astro') return '(GMST)';
       try {
-        const os = new Date().toLocaleTimeString('en-US', { timeZone: timezone, timeZoneName: 'shortOffset' });
-        const m = os.match(/(GMT|UTC)([+-]\d{1,2}(:\d{2})?)/);
-        return m ? `(UTC${m[2]})` : '';
-      } catch (e) { return ''; }
+        const offsetString = new Date().toLocaleTimeString('en-US', { timeZone: timezone, timeZoneName: 'shortOffset' });
+        const match = offsetString.match(/(GMT|UTC)([+-]\d{1,2}(:\d{2})?)/);
+        if (match) return `(UTC${match[2]})`;
+        if (offsetString.includes('GMT') || offsetString.includes('UTC')) return '(UTC+0)';
+      } catch (e) { }
+      return '';
     }
 
     function updateLocalClock() {
-      localClockDeElement.textContent = new Date().toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
+      const timeStringDe = new Date().toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
+      if (localClockDeElement) localClockDeElement.textContent = timeStringDe;
     }
 
+    // WIEDERHERGESTELLTE AUSFÜHRLICHE ZEITBERECHNUNG
     function updateTimeAndDate() {
       const now = new Date();
       let timeString = '', dateString = '';
       const locale = 'de-DE';
 
       if (selectedTimezone === 'wot') {
-        const lon = 10.839; 
-        const dayOfYear = Math.floor((now - new Date(now.getFullYear(), 0, 0)) / 86400000);
+        const longitude = 10.839; 
+        const now2 = new Date();
+        const start = new Date(now2.getFullYear(), 0, 0);
+        const diff = now2 - start;
+        const dayOfYear = Math.floor(diff / (1000 * 60 * 60 * 24));
         const b = (2 * Math.PI * (dayOfYear - 81)) / 365;
         const eot = 9.87 * Math.sin(2 * b) - 7.53 * Math.cos(b) - 1.5 * Math.sin(b);
-        const wotDate = new Date(now.getTime() + (now.getTimezoneOffset() * 60000) + ((lon * 4) + eot) * 60000);
-        timeString = wotDate.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+        const totalCorrectionMinutes = (longitude * 4) + eot;
+        const utcTimestamp = now.getTime() + (now.getTimezoneOffset() * 60000);
+        const wotDate = new Date(utcTimestamp + (totalCorrectionMinutes * 60000));
+        timeString = `${String(wotDate.getHours()).padStart(2, '0')}:${String(wotDate.getMinutes()).padStart(2, '0')}:${String(wotDate.getSeconds()).padStart(2, '0')}`;
         dateString = now.toLocaleDateString(locale, { weekday: 'long', day: '2-digit', month: '2-digit', year: 'numeric' });
       } else if (selectedTimezone === 'astro') {
-        const lon = 10.839;
-        const d = (now.getTime() / 86400000 + 2440587.5) - 2451545.0;
-        let lst = (18.697374558 + 24.06570982441908 * d + lon / 15) % 24;
+        const longitude = 10.839; 
+        const jd = (now.getTime() / 86400000) + 2440587.5;
+        const d = jd - 2451545.0;
+        let gmst = (18.697374558 + 24.06570982441908 * d) % 24;
+        let lst = (gmst + (longitude / 15)) % 24; 
         if (lst < 0) lst += 24;
-        const h = Math.floor(lst), m = Math.floor((lst-h)*60), s = Math.floor(((lst-h)*60-m)*60);
-        timeString = `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+        const h = Math.floor(lst), m = Math.floor((lst - h) * 60), s = Math.floor(((lst - h) * 60 - m) * 60);
+        const f = (v) => String(v).padStart(2, '0');
+        timeString = `${f(h)}:${f(m)}:${f(s)}`;
         dateString = now.toLocaleDateString(locale, { weekday: 'long', day: '2-digit', month: '2-digit', year: 'numeric' });
       } else if (selectedTimezone === 'MEZ' || selectedTimezone === 'MESZ') {
-        const off = selectedTimezone === 'MEZ' ? 1 : 2;
-        const d = new Date(now.getTime() + (off * 3600000) + (now.getTimezoneOffset() * 60000));
-        timeString = d.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-        dateString = d.toLocaleDateString(locale, { weekday: 'long', day: '2-digit', month: '2-digit', year: 'numeric' });
+        const offsetHours = selectedTimezone === 'MEZ' ? 1 : 2;
+        const date = new Date(now.getTime() + (offsetHours * 60 * 60 * 1000) + (now.getTimezoneOffset() * 60000));
+        timeString = `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}:${String(date.getSeconds()).padStart(2, '0')}`;
+        dateString = date.toLocaleDateString(locale, { weekday: 'long', day: '2-digit', month: '2-digit', year: 'numeric' });
       } else {
-        timeString = now.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit', second: '2-digit', timeZone: selectedTimezone });
+        timeString = now.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit', second: '2-digit', timeZone: selectedTimezone, hour12: false });
         dateString = now.toLocaleDateString(locale, { weekday: 'long', day: '2-digit', month: '2-digit', year: 'numeric', timeZone: selectedTimezone });
       }
 
-      selectedCityTitleElement.textContent = selectedCityName;
-      clockElement.textContent = timeString;
-      dateElement.textContent = dateString;
-      timeDifferenceElement.innerHTML = `${calculateTimeDifference()} ${getUTCOffsetString(selectedTimezone)}`;
+      if (selectedCityTitleElement) selectedCityTitleElement.textContent = selectedCityName;
+      if (clockElement) clockElement.textContent = timeString;
+      if (dateElement) dateElement.textContent = dateString;
+      
+      const diffText = calculateTimeDifference(); 
+      const utcOffsetText = getUTCOffsetString(selectedTimezone);
+      if (timeDifferenceElement) timeDifferenceElement.innerHTML = `${diffText} ${utcOffsetText}`;
     }
 
     timezoneSelectorButton.addEventListener('click', () => {
@@ -356,7 +411,10 @@
         if (cityToTimezoneMap[val]) {
             saveTimezone(cityToTimezoneMap[val], e.target.value);
             updateTimeAndDate();
-            setTimeout(() => { timezoneModal.classList.add('hidden'); citySearchInput.value = ''; }, 300);
+            setTimeout(() => {
+                timezoneModal.classList.add('hidden');
+                citySearchInput.value = '';
+            }, 300);
         }
     });
 
@@ -371,7 +429,10 @@
 
     document.getElementById('close-modal').addEventListener('click', () => timezoneModal.classList.add('hidden'));
 
-    setInterval(() => { updateLocalClock(); updateTimeAndDate(); }, 1000);
+    setInterval(() => {
+        updateLocalClock();
+        updateTimeAndDate();
+    }, 1000);
     updateLocalClock();
     updateTimeAndDate();
   </script>
