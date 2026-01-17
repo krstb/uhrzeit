@@ -498,7 +498,7 @@
         citySearchInput.focus();
     });
 
-    // NEU: Logik für die Echtzeit-Suche
+    // KORRIGIERTE LOGIK: Suche und Übernahme
     citySearchInput.addEventListener('input', (e) => {
         const term = e.target.value.toLowerCase();
         const options = searchableCitiesPulldown.querySelectorAll('option:not([value=""])');
@@ -510,6 +510,32 @@
             opt.style.display = matches ? '' : 'none';
             if (matches && !firstMatch) firstMatch = opt;
         });
+
+        groups.forEach(group => {
+            const visibleOptions = Array.from(group.querySelectorAll('option')).filter(opt => opt.style.display !== 'none');
+            group.style.display = visibleOptions.length > 0 ? '' : 'none';
+        });
+
+        // WICHTIG: Setzt den Wert im Hintergrund, damit Enter oder Klick funktioniert
+        if (firstMatch && term !== '') {
+            searchableCitiesPulldown.value = firstMatch.value;
+        } else if (term === '') {
+            searchableCitiesPulldown.value = '';
+        }
+    });
+
+    // NEU: Ermöglicht das Übernehmen mit der Enter-Taste
+    citySearchInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            const value = searchableCitiesPulldown.value;
+            if (value) {
+                const [newTimezone, newCityName] = value.split('|');
+                saveTimezone(newTimezone, newCityName);
+                updateTimeAndDate();
+                timezoneModal.classList.add('hidden');
+            }
+        }
+    });
 
         groups.forEach(group => {
             const visibleOptions = Array.from(group.querySelectorAll('option')).filter(opt => opt.style.display !== 'none');
