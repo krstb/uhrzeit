@@ -494,6 +494,7 @@
     // Modal öffnen
     timezoneSelectorButton.addEventListener('click', () => {
         citySearchInput.value = '';
+        searchableCitiesPulldown.value = ''; // Reset Auswahl
         createModalButtons();
         populateSearchableCitiesDropdown();
         timezoneModal.classList.remove('hidden');
@@ -524,7 +525,7 @@
     });
 
     function confirmSelection(value) {
-        if (value) {
+        if (value && value.includes('|')) {
             const [newTimezone, newCityName] = value.split('|');
             saveTimezone(newTimezone, newCityName);
             updateTimeAndDate();
@@ -535,15 +536,19 @@
     // Auswahl per ENTER im Suchfeld
     citySearchInput.addEventListener('keydown', (e) => {
         if (e.key === 'Enter') {
-            // Verhindert das Neuladen der Seite, falls das in einem Formular wäre
-            e.preventDefault(); 
+            e.preventDefault();
             confirmSelection(searchableCitiesPulldown.value);
         }
     });
 
-    // WICHTIG: Das 'change' Event greift beim Dropdown, wenn man einen Eintrag wählt
+    // Auswahl im Pulldown (für Klick oder manuelle Auswahl)
     searchableCitiesPulldown.addEventListener('change', (e) => {
         confirmSelection(e.target.value);
+    });
+
+    // Sicherheitshalber für Touch-Geräte
+    searchableCitiesPulldown.addEventListener('input', (e) => {
+        if (e.target.value) confirmSelection(e.target.value);
     });
 
     // Auswahl über die Schnellwahl-Buttons
