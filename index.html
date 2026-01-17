@@ -25,51 +25,63 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;800&family=JetBrains+Mono:wght@400;700&display=swap');
-    html {background-color: #000000 !important;}
-    body { font-family: 'Inter', sans-serif; }
-    .modal-backdrop { background-color: rgba(0, 0, 0, 0.8); }
-    .tabular-nums { font-variant-numeric: tabular-nums; }
+    
+    /* Fix für PWA-Ränder und Hintergrund */
+    html {
+      background-color: #000000 !important;
+    }
+    
+    body { 
+      font-family: 'Inter', sans-serif; 
+    }
+
+    .modal-backdrop {
+      background-color: rgba(0, 0, 0, 0.8);
+    }
+
+    .tabular-nums {
+      font-variant-numeric: tabular-nums;
+    }
   </style>
 </head>
 <body class="bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 min-h-screen flex flex-col p-4">
 
   <div class="flex flex-col items-center space-y-6 w-full mt-4">
-    <div class="flex flex-col items-center space-y-4 w-full">
-      <div class="bg-indigo-900 rounded-xl p-6 shadow-lg flex flex-col items-center w-full max-w-sm md:max-w-lg">
-        <h2 class="text-xl font-bold text-white opacity-80 text-center mb-2">Lokale Zeit</h2>
-        <div id="local-clock-de" class="flex items-center justify-center text-6xl sm:text-7xl md:text-8xl font-extrabold font-mono tracking-wide text-white w-full tabular-nums"></div>
-      </div>
-      
-      <div class="flex flex-col items-center bg-indigo-900 rounded-xl p-6 shadow-lg w-full max-w-sm md:max-w-lg">
-        <h2 id="selected-city-title" class="text-xl font-bold text-white opacity-80 text-center mb-2">Ausgewählte Zeit</h2>
-        <div id="clock" class="flex flex-col items-center justify-center text-6xl sm:text-7xl md:text-8xl font-extrabold font-mono tracking-wide text-white tabular-nums"></div>
-        <div id="time-difference-display" class="mt-2 text-base sm:text-lg md:text-xl font-light tracking-wide text-center text-white opacity-80"></div>
-      </div>
-      
-      <div class="bg-indigo-900 rounded-xl p-6 shadow-lg">
-        <h2 class="text-xl font-bold text-white opacity-80 text-center mb-2">Datum</h2>
-        <div id="date-display" class="text-xl sm:text-2xl md:text-3xl font-light tracking-wide text-center text-white opacity-80 tabular-nums"></div>
-      </div>
+    
+    <div class="bg-white rounded-2xl p-8 shadow-2xl flex flex-col items-center w-full max-w-sm md:max-w-lg">
+      <h2 class="text-xl font-bold text-gray-500 text-center mb-2 uppercase tracking-widest">Lokale Zeit</h2>
+      <div id="local-clock-de" class="flex items-center justify-center text-6xl sm:text-7xl md:text-8xl font-extrabold font-mono tracking-tighter text-gray-900 w-full tabular-nums"></div>
+    </div>
+    
+    <div class="flex flex-col items-center bg-white rounded-2xl p-8 shadow-2xl w-full max-w-sm md:max-w-lg">
+      <h2 id="selected-city-title" class="text-xl font-bold text-gray-500 text-center mb-2 uppercase tracking-widest">Ausgewählte Zeit</h2>
+      <div id="clock" class="flex flex-col items-center justify-center text-6xl sm:text-7xl md:text-8xl font-extrabold font-mono tracking-tighter text-gray-900 tabular-nums"></div>
+      <div id="time-difference-display" class="mt-4 text-base sm:text-lg md:text-xl font-medium tracking-wide text-center text-indigo-600"></div>
+    </div>
+    
+    <div class="bg-white rounded-2xl p-6 shadow-xl">
+      <div id="date-display" class="text-xl sm:text-2xl md:text-3xl font-bold tracking-tight text-center text-gray-800 tabular-nums"></div>
     </div>
 
-    <button id="timezone-selector-button" class="text-white p-3 rounded-full bg-indigo-700 hover:bg-indigo-600 transition-colors duration-200 flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-white/50 shadow-lg">
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+    <button id="timezone-selector-button" class="text-white p-4 rounded-full bg-gray-900 hover:bg-black transition-all duration-300 flex items-center justify-center focus:outline-none focus:ring-4 focus:ring-white/20 shadow-2xl transform hover:scale-105">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
           <path stroke-linecap="round" stroke-linejoin="round" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m0 0a9 9 0 019-9m-9 9a9 9 0 009 9" />
         </svg>
     </button>
     
     <div id="timezone-modal" class="hidden fixed inset-0 flex items-center justify-center p-4 z-50 modal-backdrop">
-      <div class="bg-white rounded-xl p-6 shadow-2xl flex flex-col space-y-4 max-h-[90vh] overflow-y-auto w-full max-w-[95%] sm:max-w-lg md:max-w-xl">
-        <h3 class="text-2xl font-bold text-black mb-2">Zeitzone</h3>
+      <div class="bg-white rounded-3xl p-8 shadow-2xl flex flex-col space-y-6 max-h-[90vh] overflow-y-auto w-full max-w-[95%] sm:max-w-lg md:max-w-xl">
+        <h3 class="text-3xl font-black text-gray-900 mb-2 border-b-4 border-indigo-500 pb-2">Zeitzone</h3>
         
-        <div class="flex flex-col space-y-2">
-            <label for="city-search-input" class="block text-xl font-bold text-black text-center">Stadt suchen</label>
-            <input type="text" id="city-search-input" list="searchable-cities-list" placeholder="Name eingeben..." class="w-full p-3 text-lg text-black bg-gray-100 rounded-lg border-2 border-indigo-300 focus:outline-none focus:border-indigo-500 shadow-inner" />
+        <div class="flex flex-col space-y-3">
+            <label for="city-search-input" class="block text-sm font-black text-gray-400 uppercase tracking-widest">Stadt suchen</label>
+            <input type="text" id="city-search-input" list="searchable-cities-list" placeholder="Stadt eingeben..." class="w-full p-4 text-xl text-gray-900 bg-gray-100 rounded-xl border-none focus:ring-4 focus:ring-indigo-500 shadow-inner" />
             <datalist id="searchable-cities-list"></datalist>
         </div>
 
-        <div id="modal-options-container" class="flex flex-col space-y-3 pt-4 border-t border-gray-400"></div>
-        <button id="close-modal" class="mt-4 text-white text-lg px-4 py-2 rounded-lg bg-red-600 hover:bg-red-700 shadow-md">Schließen</button>
+        <div id="modal-options-container" class="flex flex-col space-y-3 pt-4"></div>
+        
+        <button id="close-modal" class="mt-6 text-white text-lg font-bold px-6 py-3 rounded-xl bg-red-500 hover:bg-red-600 shadow-lg transition-colors">Schließen</button>
       </div>
     </div>
   </div>
@@ -86,7 +98,7 @@
     const citySearchInput = document.getElementById('city-search-input');
     const searchableCitiesList = document.getElementById('searchable-cities-list');
 
-    // ... (Städteliste bleibt unverändert)
+    // UNGEKÜRZTE STÄDTELISTE
     const cityToTimezoneMap = {
         'abu dhabi': 'Asia/Dubai', 'accra': 'Africa/Accra', 'alexandria': 'Africa/Cairo', 'algier': 'Africa/Algiers',
         'amman': 'Asia/Amman', 'amsterdam': 'Europe/Amsterdam', 'ankara': 'Europe/Istanbul', 'antananarivo': 'Indian/Antananarivo',
@@ -170,9 +182,12 @@
         { name: 'Amerik. Samoa *', timezone: 'Pacific/Pago_Pago' }, 
         { name: 'Tokio', timezone: 'Asia/Tokyo' },
     ];
+    
     const specialTimezones = [
-        { name: 'Astrozeit (Stadtb.)', timezone: 'astro' }, { name: 'MEZ', timezone: 'MEZ' },
-        { name: 'MESZ', timezone: 'MESZ' }, { name: 'UTC / GMT', timezone: 'Etc/UTC' },
+        { name: 'Astrozeit (Stadtb.)', timezone: 'astro' }, 
+        { name: 'MEZ', timezone: 'MEZ' },
+        { name: 'MESZ', timezone: 'MESZ' }, 
+        { name: 'UTC / GMT', timezone: 'Etc/UTC' },
         { name: 'WOZ (Stadtb.)', timezone: 'wot' },
     ];
 
@@ -190,40 +205,27 @@
 
     function createModalButtons() {
         modalOptionsContainer.innerHTML = '';
-        const geographicHeading = document.createElement('h4');
-        geographicHeading.className = "text-xl font-bold text-black text-center";
-        geographicHeading.textContent = "Häufige Zeitzonen";
-        modalOptionsContainer.appendChild(geographicHeading);
-
+        
         const geographicContainer = document.createElement('div');
-        geographicContainer.className = "grid grid-cols-1 sm:grid-cols-2 gap-2";
+        geographicContainer.className = "grid grid-cols-1 sm:grid-cols-2 gap-3";
         modalOptionsContainer.appendChild(geographicContainer);
 
         geographicTimezones.forEach(option => {
             const button = document.createElement('button');
-            button.className = "modal-option text-white text-lg px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 transition-colors duration-200 shadow";
+            button.className = "modal-option text-white text-lg font-bold px-4 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 shadow";
             button.textContent = option.name;
             button.dataset.timezone = option.timezone;
             button.dataset.cityName = option.name.replace(' *', '');
             geographicContainer.appendChild(button);
         });
         
-        const separator = document.createElement('div');
-        separator.className = "w-full h-px my-4 bg-gray-300";
-        modalOptionsContainer.appendChild(separator);
-        
-        const specialHeading = document.createElement('h4');
-        specialHeading.className = "text-xl font-bold text-black text-center";
-        specialHeading.textContent = "Spezielle Zeitzonen";
-        modalOptionsContainer.appendChild(specialHeading);
-
         const specialContainer = document.createElement('div');
-        specialContainer.className = "grid grid-cols-1 sm:grid-cols-2 gap-2";
+        specialContainer.className = "grid grid-cols-1 sm:grid-cols-2 gap-3 mt-4";
         modalOptionsContainer.appendChild(specialContainer);
 
         specialTimezones.forEach(option => {
             const button = document.createElement('button');
-            button.className = "modal-option text-black text-lg px-4 py-2 rounded-lg bg-yellow-500 hover:bg-yellow-600 transition-colors duration-200 shadow";
+            button.className = "modal-option text-gray-900 text-lg font-bold px-4 py-3 rounded-xl bg-yellow-400 hover:bg-yellow-500 shadow";
             button.textContent = option.name;
             button.dataset.timezone = option.timezone;
             button.dataset.cityName = option.name.replace(' *', '');
@@ -238,7 +240,7 @@
         selectedCityName = cityName;
     }
 
-    // STABILE AUSFÜHRLICHE LOGIK MIT REGEX
+    // --- AUSFÜHRLICHE MATHE-LOGIK (Ungekürzt) ---
     function getOffsetHours(timezone) {
         if (timezone === 'MEZ') return 1;
         if (timezone === 'MESZ') return 2;
@@ -265,12 +267,16 @@
                         const parts = offset.match(/([+-])(\d{1,2}):(\d{2})/);
                         if (parts) {
                             const sign = parts[1] === '-' ? -1 : 1;
-                            return sign * (Number(parts[2]) + Number(parts[3]) / 60);
+                            const h = Number(parts[2]);
+                            const m = Number(parts[3]);
+                            return sign * (h + m / 60);
                         }
                     }
                     return Number(offset);
                 } 
-                if (offsetString === 'GMT' || offsetString === 'UTC') return 0;
+                if (offsetString === 'GMT' || offsetString === 'UTC' || offsetString === 'Z') {
+                    return 0;
+                }
             }
         } catch (e) { console.error(e); }
         return null;
@@ -307,7 +313,6 @@
       localClockDeElement.textContent = new Date().toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
     }
 
-    // AUSFÜHRLICHE ZEITBERECHNUNG (WOT/ASTRO)
     function updateTimeAndDate() {
       const now = new Date();
       let timeString = '', dateString = '';
@@ -315,25 +320,32 @@
 
       if (selectedTimezone === 'wot') {
         const longitude = 10.839; 
-        const dayOfYear = Math.floor((now - new Date(now.getFullYear(), 0, 0)) / 86400000);
+        const start = new Date(now.getFullYear(), 0, 0);
+        const diff = now - start;
+        const dayOfYear = Math.floor(diff / (1000 * 60 * 60 * 24));
         const b = (2 * Math.PI * (dayOfYear - 81)) / 365;
         const eot = 9.87 * Math.sin(2 * b) - 7.53 * Math.cos(b) - 1.5 * Math.sin(b);
-        const wotDate = new Date(now.getTime() + (now.getTimezoneOffset() * 60000) + ((longitude * 4) + eot) * 60000);
+        const totalCorrectionMinutes = (longitude * 4) + eot;
+        const utcTimestamp = now.getTime() + (now.getTimezoneOffset() * 60000);
+        const wotDate = new Date(utcTimestamp + (totalCorrectionMinutes * 60000));
         timeString = wotDate.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit', second: '2-digit' });
         dateString = now.toLocaleDateString(locale, { weekday: 'long', day: '2-digit', month: '2-digit', year: 'numeric' });
       } else if (selectedTimezone === 'astro') {
-        const longitude = 10.839;
-        const d = (now.getTime() / 86400000 + 2440587.5) - 2451545.0;
-        let lst = (18.697374558 + 24.06570982441908 * d + longitude / 15) % 24;
+        const longitude = 10.839; 
+        const jd = (now.getTime() / 86400000) + 2440587.5;
+        const d = jd - 2451545.0;
+        let gmst = (18.697374558 + 24.06570982441908 * d) % 24;
+        let lst = (gmst + (longitude / 15)) % 24; 
         if (lst < 0) lst += 24;
-        const h = Math.floor(lst), m = Math.floor((lst-h)*60), s = Math.floor(((lst-h)*60-m)*60);
-        timeString = `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+        const h = Math.floor(lst), m = Math.floor((lst - h) * 60), s = Math.floor(((lst - h) * 60 - m) * 60);
+        const f = (v) => String(v).padStart(2, '0');
+        timeString = `${f(h)}:${f(m)}:${f(s)}`;
         dateString = now.toLocaleDateString(locale, { weekday: 'long', day: '2-digit', month: '2-digit', year: 'numeric' });
       } else if (selectedTimezone === 'MEZ' || selectedTimezone === 'MESZ') {
-        const off = selectedTimezone === 'MEZ' ? 1 : 2;
-        const d = new Date(now.getTime() + (off * 3600000) + (now.getTimezoneOffset() * 60000));
-        timeString = d.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-        dateString = d.toLocaleDateString(locale, { weekday: 'long', day: '2-digit', month: '2-digit', year: 'numeric' });
+        const offsetHours = selectedTimezone === 'MEZ' ? 1 : 2;
+        const date = new Date(now.getTime() + (offsetHours * 3600000) + (now.getTimezoneOffset() * 60000));
+        timeString = date.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+        dateString = date.toLocaleDateString(locale, { weekday: 'long', day: '2-digit', month: '2-digit', year: 'numeric' });
       } else {
         timeString = now.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit', second: '2-digit', timeZone: selectedTimezone });
         dateString = now.toLocaleDateString(locale, { weekday: 'long', day: '2-digit', month: '2-digit', year: 'numeric', timeZone: selectedTimezone });
@@ -345,6 +357,7 @@
       timeDifferenceElement.innerHTML = `${calculateTimeDifference()} ${getUTCOffsetString(selectedTimezone)}`;
     }
 
+    // Event-Listener
     timezoneSelectorButton.addEventListener('click', () => {
         citySearchInput.value = '';
         createModalButtons();
