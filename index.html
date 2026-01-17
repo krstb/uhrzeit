@@ -558,23 +558,18 @@
         }
     });
 
-    // Schließen-Button
+   // Schließen-Button
     document.getElementById('close-modal').addEventListener('click', () => {
         timezoneModal.classList.add('hidden');
     });
 
-    // Uhren-Timer starten
+    // Uhren-Timer starten (Aktualisierung jede Sekunde)
     setInterval(() => {
         updateLocalClock();
         updateTimeAndDate();
     }, 1000);
 
-    // Initialer Aufruf
-    updateLocalClock();
-    updateTimeAndDate();
-    }, 1000);
-
-    // Initialer Aufruf beim Laden
+    // Initialer Aufruf beim Laden der Seite
     updateLocalClock();
     updateTimeAndDate();
   </script>
