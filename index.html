@@ -489,79 +489,88 @@
       if (timeDifferenceElement) timeDifferenceElement.innerHTML = `${diffText} ${utcOffsetText}`;
     }
     
-    // Event-Listener
-    timezoneSelectorButton.addEventListener('click', () => {
-        citySearchInput.value = '';
-        createModalButtons();
-        populateSearchableCitiesDropdown();
-        timezoneModal.classList.remove('hidden');
-        citySearchInput.focus();
-    });
+    // --- EVENT-LISTENER ---
 
-    citySearchInput.addEventListener('input', (e) => {
-        const term = e.target.value.toLowerCase();
-        const options = searchableCitiesPulldown.querySelectorAll('option:not([value=""])');
-        const groups = searchableCitiesPulldown.querySelectorAll('optgroup');
-        let firstMatch = null;
+    // Modal öffnen
+    timezoneSelectorButton.addEventListener('click', () => {
+        citySearchInput.value = '';
+        createModalButtons();
+        populateSearchableCitiesDropdown();
+        timezoneModal.classList.remove('hidden');
+        citySearchInput.focus();
+    });
 
-        options.forEach(opt => {
-            const matches = opt.textContent.toLowerCase().includes(term);
-            opt.style.display = matches ? '' : 'none';
-            if (matches && !firstMatch) firstMatch = opt;
-        });
+    // Such-Logik (Filterung des Pulldowns)
+    citySearchInput.addEventListener('input', (e) => {
+        const term = e.target.value.toLowerCase();
+        const options = searchableCitiesPulldown.querySelectorAll('option:not([value=""])');
+        const groups = searchableCitiesPulldown.querySelectorAll('optgroup');
+        let firstMatch = null;
 
-        groups.forEach(group => {
-            const visibleOptions = Array.from(group.querySelectorAll('option')).filter(opt => opt.style.display !== 'none');
-            group.style.display = visibleOptions.length > 0 ? '' : 'none';
-        });
+        options.forEach(opt => {
+            const matches = opt.textContent.toLowerCase().includes(term);
+            opt.style.display = matches ? '' : 'none';
+            if (matches && !firstMatch) firstMatch = opt;
+        });
 
-        if (firstMatch && term !== '') {
-            searchableCitiesPulldown.value = firstMatch.value;
-        } else if (term === '') {
-            searchableCitiesPulldown.value = '';
-        }
-    });
+        groups.forEach(group => {
+            const visibleOptions = Array.from(group.querySelectorAll('option')).filter(opt => opt.style.display !== 'none');
+            group.style.display = visibleOptions.length > 0 ? '' : 'none';
+        });
 
-    citySearchInput.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') {
-            const value = searchableCitiesPulldown.value;
-            if (value) {
-                const [newTimezone, newCityName] = value.split('|');
-                saveTimezone(newTimezone, newCityName);
-                updateTimeAndDate();
-                timezoneModal.classList.add('hidden');
-            }
-        }
-    });
+        if (firstMatch && term !== '') {
+            searchableCitiesPulldown.value = firstMatch.value;
+        }
+    });
 
-    document.getElementById('close-modal').addEventListener('click', () => timezoneModal.classList.add('hidden'));
+    // Auswahl per ENTER im Suchfeld
+    citySearchInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            const value = searchableCitiesPulldown.value;
+            if (value) {
+                const [newTimezone, newCityName] = value.split('|');
+                saveTimezone(newTimezone, newCityName);
+                updateTimeAndDate();
+                timezoneModal.classList.add('hidden');
+            }
+        }
+    });
 
-    modalOptionsContainer.addEventListener('click', (e) => {
-        const option = e.target.closest('.modal-option');
-        if (option) {
-            saveTimezone(option.dataset.timezone, option.dataset.cityName); 
-            updateTimeAndDate();
-            timezoneModal.classList.add('hidden');
-        }
-    });
-    
-    searchableCitiesPulldown.addEventListener('change', (e) => {
-        const value = e.target.value;
-        if (value) {
-            const [newTimezone, newCityName] = value.split('|');
-            saveTimezone(newTimezone, newCityName);
-            updateTimeAndDate();
-            timezoneModal.classList.add('hidden');
-        }
-    });
+    // Auswahl per KLICK im Pulldown-Menü
+    searchableCitiesPulldown.addEventListener('change', (e) => {
+        const value = e.target.value;
+        if (value) {
+            const [newTimezone, newCityName] = value.split('|');
+            saveTimezone(newTimezone, newCityName);
+            updateTimeAndDate();
+            timezoneModal.classList.add('hidden');
+        }
+    });
 
-    // Initialisierung
-    setInterval(() => {
-        updateLocalClock();
-        updateTimeAndDate();
-    }, 1000);
-    updateLocalClock();
-    updateTimeAndDate();
-  </script>
+    // Auswahl über die Schnellwahl-Buttons
+    modalOptionsContainer.addEventListener('click', (e) => {
+        const option = e.target.closest('.modal-option');
+        if (option) {
+            saveTimezone(option.dataset.timezone, option.dataset.cityName); 
+            updateTimeAndDate();
+            timezoneModal.classList.add('hidden');
+        }
+    });
+
+    // Schließen-Button
+    document.getElementById('close-modal').addEventListener('click', () => {
+        timezoneModal.classList.add('hidden');
+    });
+
+    // Uhren-Timer starten
+    setInterval(() => {
+        updateLocalClock();
+        updateTimeAndDate();
+    }, 1000);
+
+    // Initialer Aufruf beim Laden
+    updateLocalClock();
+    updateTimeAndDate();
+  </script>
 </body>
 </html>
