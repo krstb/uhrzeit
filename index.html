@@ -59,7 +59,7 @@
     </button>
     
     <div id="timezone-modal" class="hidden fixed inset-0 flex items-center justify-center p-4 z-50 modal-backdrop">
-      <div class="bg-white backdrop-blur-xl rounded-xl p-6 shadow-2xl flex flex-col space-y-4 max-h-[90vh] overflow-y-auto w-full max-w-[95%] sm:max-w-lg md:max-w-xl">
+      <div class="bg-white/60 backdrop-blur-xl rounded-xl p-6 shadow-2xl flex flex-col space-y-4 max-h-[90vh] overflow-y-auto w-full max-w-[95%] sm:max-w-lg md:max-w-xl">
         <h3 class="text-2xl font-bold text-black mb-2">Zeitzone</h3>
         
         <div class="flex flex-col space-y-2">
@@ -164,8 +164,20 @@
     };
 
     const geographicTimezones = [
-        { name: 'Berlin', timezone: 'Europe/Berlin' }, { name: 'Kiribati Ost *', timezone: 'Pacific/Kiritimati' },
-        { name: 'Amerik. Samoa *', timezone: 'Pacific/Pago_Pago' }, { name: 'Singapur', timezone: 'Asia/Singapore' },
+        { name: 'Berlin', timezone: 'Europe/Berlin' }, 
+        { name: 'Brasilia', timezone: 'America/Sao_Paulo' },
+        { name: 'Dubai', timezone: 'Asia/Dubai' }, 
+        { name: 'Kanarische Inseln', timezone: 'Atlantic/Canary' }, 
+        { name: 'London', timezone: 'Europe/London' },
+        { name: 'Los Angeles', timezone: 'America/Los_Angeles' }, 
+        { name: 'Neu-Delhi', timezone: 'Asia/Kolkata' },
+        { name: 'New York', timezone: 'America/New_York' }, 
+        { name: 'Peking', timezone: 'Asia/Shanghai' },
+        { name: 'Kiribati Ost *', timezone: 'Pacific/Kiritimati' }, 
+        { name: 'Amerik. Samoa *', timezone: 'Pacific/Pago_Pago' }, 
+        { name: 'Singapur', timezone: 'Asia/Singapore' },
+        { name: 'Sydney', timezone: 'Australia/Sydney' }, 
+        { name: 'Tokio', timezone: 'Asia/Tokyo' },
     ];
     const specialTimezones = [
         { name: 'Astrozeit (Stadtb.)', timezone: 'astro' }, { name: 'MEZ', timezone: 'MEZ' },
@@ -198,7 +210,7 @@
 
         geographicTimezones.forEach(option => {
             const button = document.createElement('button');
-            button.className = "modal-option text-black text-lg px-4 py-2 rounded-lg bg-indigo-500/50 hover:bg-indigo-500/70";
+            button.className = "modal-option text-black text-lg px-4 py-2 rounded-lg bg-indigo-500/50 hover:bg-indigo-500/70 transition-colors duration-200";
             button.textContent = option.name;
             button.dataset.timezone = option.timezone;
             button.dataset.cityName = option.name.replace(' *', '');
@@ -220,7 +232,7 @@
 
         specialTimezones.forEach(option => {
             const button = document.createElement('button');
-            button.className = "modal-option text-black text-lg px-4 py-2 rounded-lg bg-yellow-500/50 hover:bg-yellow-500/70";
+            button.className = "modal-option text-black text-lg px-4 py-2 rounded-lg bg-yellow-500/50 hover:bg-yellow-500/70 transition-colors duration-200";
             button.textContent = option.name;
             button.dataset.timezone = option.timezone;
             button.dataset.cityName = option.name.replace(' *', '');
@@ -235,94 +247,155 @@
         selectedCityName = cityName;
     }
 
+    // WIEDERHERGESTELLTE AUSFÜHRLICHE LOGIK
     function getOffsetHours(timezone) {
         if (timezone === 'MEZ') return 1;
         if (timezone === 'MESZ') return 2;
         if (timezone === 'wot' || timezone === 'astro') return null;
+        
+        if (timezone === Intl.DateTimeFormat().resolvedOptions().timeZone) {
+             try {
+                return getOffsetHoursDynamic(timezone); 
+             } catch (e) {
+                return new Date().getTimezoneOffset() / -60;
+             }
+        }
+        return getOffsetHoursDynamic(timezone);
+    }
+    
+    function getOffsetHoursDynamic(timezone) {
         try {
             const date = new Date();
-            const parts = new Intl.DateTimeFormat('en-US', { timeZone: timezone, timeZoneName: 'shortOffset' }).formatToParts(date);
-            const tzName = parts.find(p => p.type === 'timeZoneName').value;
-            const match = tzName.match(/([+-]\d{1,2})(:(\d{2}))?/);
-            if (match) {
-                const h = parseInt(match[1]);
-                const m = match[3] ? parseInt(match[3]) : 0;
-                return h + (m / 60) * (h < 0 ? -1 : 1);
+            const formatter = new Intl.DateTimeFormat('en-US', {
+                timeZone: timezone,
+                timeZoneName: 'shortOffset',
+                hour: '2-digit'
+            });
+            
+            const parts = formatter.formatToParts(date);
+            const offsetPart = parts.find(p => p.type === 'timeZoneName' && (p.value.startsWith('GMT') || p.value.startsWith('UTC')));
+            
+            if (offsetPart) {
+                const offsetString = offsetPart.value;
+                const match = offsetString.match(/([+-]\d{1,2}(:\d{2})?)/);
+
+                if (match) {
+                    const offset = match[1];
+                    if (offset.includes(':')) {
+                        const parts = offset.match(/([+-])(\d{1,2}):(\d{2})/);
+                        if (parts) {
+                            const sign = parts[1] === '-' ? -1 : 1;
+                            const h = Number(parts[2]);
+                            const m = Number(parts[3]);
+                            return sign * (h + m / 60);
+                        }
+                    }
+                    return Number(offset);
+                } 
+                if (offsetString === 'GMT' || offsetString === 'UTC' || offsetString === 'Z') {
+                    return 0;
+                }
             }
-            return 0;
-        } catch (e) { return null; }
+        } catch (e) {
+            console.error(`Fehler bei der Offset-Ermittlung für ${timezone}:`, e);
+        }
+        return null;
     }
 
     function calculateTimeDifference() {
-        const localTz = Intl.DateTimeFormat().resolvedOptions().timeZone; 
-        const localOffset = getOffsetHours(localTz); 
+        const localTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone; 
+        const localOffset = getOffsetHours(localTimezone); 
         const selectedOffset = getOffsetHours(selectedTimezone);
-        if (selectedOffset === null || localOffset === null) return '';
-        const diffMinutes = Math.round((selectedOffset - localOffset) * 60);
-        if (diffMinutes === 0) return 'Gleiche Zeit';
-        const h = Math.abs(Math.trunc(diffMinutes / 60));
-        const m = Math.abs(diffMinutes % 60);
-        const sign = diffMinutes < 0 ? 'zurück' : 'voraus';
-        let res = [];
-        if (h > 0) res.push(`${h} Std.`);
-        if (m > 0) res.push(`${m} Min.`);
-        return `${res.join(' ')} ${sign}`;
+
+        if (selectedOffset === null || localOffset === null || selectedTimezone === 'wot' || selectedTimezone === 'astro') {
+            return ''; 
+        }
+
+        let diffHoursFloat = selectedOffset - localOffset;
+        const totalDiffMinutes = Math.round(diffHoursFloat * 60);
+        
+        let diffHours = Math.trunc(totalDiffMinutes / 60);
+        let diffMins = Math.abs(totalDiffMinutes % 60);
+
+        if (diffHours === 0 && diffMins === 0) return 'Gleiche Zeit';
+
+        const absHours = Math.abs(diffHours);
+        const absMins = Math.abs(diffMins);
+        const sign = (diffHours < 0 || (diffHours === 0 && totalDiffMinutes < 0)) ? 'zurück' : 'voraus';
+
+        let diffParts = [];
+        if (absHours > 0) diffParts.push(`${absHours} Stunde${absHours === 1 ? '' : 'n'}`);
+        if (absMins > 0) diffParts.push(`${absMins} Minute${absMins === 1 ? '' : 'n'}`);
+
+        return `${diffParts.join(' und ')} ${sign}`;
     }
 
     function getUTCOffsetString(timezone) {
-        if (timezone === 'MEZ') return '(UTC+1)';
-        if (timezone === 'MESZ') return '(UTC+2)';
-        if (timezone === 'wot') return '<br>(Wahre Ortszeit)';
-        if (timezone === 'astro') return '(GMST)';
-        try {
-            const offsetString = new Date().toLocaleTimeString('en-US', { timeZone: timezone, timeZoneName: 'shortOffset' });
-            const match = offsetString.match(/(GMT|UTC)([+-]\d{1,2}(:\d{2})?)/);
-            return match ? `(UTC${match[2]})` : '(UTC+0)';
-        } catch (e) { return ''; }
+      if (timezone === 'MEZ') return '(UTC+1)';
+      if (timezone === 'MESZ') return '(UTC+2)';
+      if (timezone === 'wot') return '<br>(Wahre Ortszeit)';
+      if (timezone === 'astro') return '(GMST)';
+      try {
+        const offsetString = new Date().toLocaleTimeString('en-US', { timeZone: timezone, timeZoneName: 'shortOffset' });
+        const match = offsetString.match(/(GMT|UTC)([+-]\d{1,2}(:\d{2})?)/);
+        if (match) return `(UTC${match[2]})`;
+        if (offsetString.includes('GMT') || offsetString.includes('UTC')) return '(UTC+0)';
+      } catch (e) { }
+      return '';
     }
 
     function updateLocalClock() {
-        const time = new Date().toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
-        if (localClockDeElement) localClockDeElement.textContent = time;
+      const timeStringDe = new Date().toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
+      if (localClockDeElement) localClockDeElement.textContent = timeStringDe;
     }
 
+    // WIEDERHERGESTELLTE AUSFÜHRLICHE ZEITBERECHNUNG
     function updateTimeAndDate() {
-        const now = new Date();
-        let timeString = '', dateString = '';
-        const locale = 'de-DE';
+      const now = new Date();
+      let timeString = '', dateString = '';
+      const locale = 'de-DE';
 
-        if (selectedTimezone === 'wot') {
-            const longitude = 10.839; 
-            const start = new Date(now.getFullYear(), 0, 0);
-            const dayOfYear = Math.floor((now - start) / 86400000);
-            const b = (2 * Math.PI * (dayOfYear - 81)) / 365;
-            const eot = 9.87 * Math.sin(2 * b) - 7.53 * Math.cos(b) - 1.5 * Math.sin(b);
-            const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
-            const wot = new Date(utc + ((longitude * 4 + eot) * 60000));
-            timeString = wot.toLocaleTimeString('de-DE', {hour:'2-digit', minute:'2-digit', second:'2-digit'});
-            dateString = now.toLocaleDateString(locale, { weekday: 'long', day: '2-digit', month: '2-digit', year: 'numeric' });
-        } else if (selectedTimezone === 'astro') {
-            const jd = (now.getTime() / 86400000) + 2440587.5;
-            const d = jd - 2451545.0;
-            let lst = (18.697374558 + 24.06570982441908 * d + (10.839 / 15)) % 24;
-            if (lst < 0) lst += 24;
-            const h = Math.floor(lst), m = Math.floor((lst - h) * 60), s = Math.floor(((lst - h) * 60 - m) * 60);
-            timeString = `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
-            dateString = now.toLocaleDateString(locale, { weekday: 'long', day: '2-digit', month: '2-digit', year: 'numeric' });
-        } else if (selectedTimezone === 'MEZ' || selectedTimezone === 'MESZ') {
-            const offset = selectedTimezone === 'MEZ' ? 1 : 2;
-            const d = new Date(now.getTime() + (offset * 3600000 + now.getTimezoneOffset() * 60000));
-            timeString = d.toLocaleTimeString('de-DE', {hour:'2-digit', minute:'2-digit', second:'2-digit'});
-            dateString = d.toLocaleDateString(locale, { weekday: 'long', day: '2-digit', month: '2-digit', year: 'numeric' });
-        } else {
-            timeString = now.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit', second: '2-digit', timeZone: selectedTimezone, hour12: false });
-            dateString = now.toLocaleDateString(locale, { weekday: 'long', day: '2-digit', month: '2-digit', year: 'numeric', timeZone: selectedTimezone });
-        }
+      if (selectedTimezone === 'wot') {
+        const longitude = 10.839; 
+        const now2 = new Date();
+        const start = new Date(now2.getFullYear(), 0, 0);
+        const diff = now2 - start;
+        const dayOfYear = Math.floor(diff / (1000 * 60 * 60 * 24));
+        const b = (2 * Math.PI * (dayOfYear - 81)) / 365;
+        const eot = 9.87 * Math.sin(2 * b) - 7.53 * Math.cos(b) - 1.5 * Math.sin(b);
+        const totalCorrectionMinutes = (longitude * 4) + eot;
+        const utcTimestamp = now.getTime() + (now.getTimezoneOffset() * 60000);
+        const wotDate = new Date(utcTimestamp + (totalCorrectionMinutes * 60000));
+        timeString = `${String(wotDate.getHours()).padStart(2, '0')}:${String(wotDate.getMinutes()).padStart(2, '0')}:${String(wotDate.getSeconds()).padStart(2, '0')}`;
+        dateString = now.toLocaleDateString(locale, { weekday: 'long', day: '2-digit', month: '2-digit', year: 'numeric' });
+      } else if (selectedTimezone === 'astro') {
+        const longitude = 10.839; 
+        const jd = (now.getTime() / 86400000) + 2440587.5;
+        const d = jd - 2451545.0;
+        let gmst = (18.697374558 + 24.06570982441908 * d) % 24;
+        let lst = (gmst + (longitude / 15)) % 24; 
+        if (lst < 0) lst += 24;
+        const h = Math.floor(lst), m = Math.floor((lst - h) * 60), s = Math.floor(((lst - h) * 60 - m) * 60);
+        const f = (v) => String(v).padStart(2, '0');
+        timeString = `${f(h)}:${f(m)}:${f(s)}`;
+        dateString = now.toLocaleDateString(locale, { weekday: 'long', day: '2-digit', month: '2-digit', year: 'numeric' });
+      } else if (selectedTimezone === 'MEZ' || selectedTimezone === 'MESZ') {
+        const offsetHours = selectedTimezone === 'MEZ' ? 1 : 2;
+        const date = new Date(now.getTime() + (offsetHours * 60 * 60 * 1000) + (now.getTimezoneOffset() * 60000));
+        timeString = `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}:${String(date.getSeconds()).padStart(2, '0')}`;
+        dateString = date.toLocaleDateString(locale, { weekday: 'long', day: '2-digit', month: '2-digit', year: 'numeric' });
+      } else {
+        timeString = now.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit', second: '2-digit', timeZone: selectedTimezone, hour12: false });
+        dateString = now.toLocaleDateString(locale, { weekday: 'long', day: '2-digit', month: '2-digit', year: 'numeric', timeZone: selectedTimezone });
+      }
 
-        selectedCityTitleElement.textContent = selectedCityName;
-        clockElement.textContent = timeString;
-        dateElement.textContent = dateString;
-        timeDifferenceElement.innerHTML = `${calculateTimeDifference()} ${getUTCOffsetString(selectedTimezone)}`;
+      if (selectedCityTitleElement) selectedCityTitleElement.textContent = selectedCityName;
+      if (clockElement) clockElement.textContent = timeString;
+      if (dateElement) dateElement.textContent = dateString;
+      
+      const diffText = calculateTimeDifference(); 
+      const utcOffsetText = getUTCOffsetString(selectedTimezone);
+      if (timeDifferenceElement) timeDifferenceElement.innerHTML = `${diffText} ${utcOffsetText}`;
     }
 
     timezoneSelectorButton.addEventListener('click', () => {
@@ -356,7 +429,10 @@
 
     document.getElementById('close-modal').addEventListener('click', () => timezoneModal.classList.add('hidden'));
 
-    setInterval(() => { updateLocalClock(); updateTimeAndDate(); }, 1000);
+    setInterval(() => {
+        updateLocalClock();
+        updateTimeAndDate();
+    }, 1000);
     updateLocalClock();
     updateTimeAndDate();
   </script>
