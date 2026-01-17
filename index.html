@@ -489,7 +489,7 @@
       if (timeDifferenceElement) timeDifferenceElement.innerHTML = `${diffText} ${utcOffsetText}`;
     }
     
-    // --- EVENT-LISTENER ---
+   // --- EVENT-LISTENER ---
 
     // Modal öffnen
     timezoneSelectorButton.addEventListener('click', () => {
@@ -518,33 +518,34 @@
             group.style.display = visibleOptions.length > 0 ? '' : 'none';
         });
 
+        // WICHTIG: Setzt den Wert, damit man sieht, was ausgewählt würde
         if (firstMatch && term !== '') {
             searchableCitiesPulldown.value = firstMatch.value;
         }
     });
 
-    // Auswahl per ENTER im Suchfeld
-    citySearchInput.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') {
-            const value = searchableCitiesPulldown.value;
-            if (value) {
-                const [newTimezone, newCityName] = value.split('|');
-                saveTimezone(newTimezone, newCityName);
-                updateTimeAndDate();
-                timezoneModal.classList.add('hidden');
-            }
-        }
-    });
-
-    // Auswahl per KLICK im Pulldown-Menü
-    searchableCitiesPulldown.addEventListener('change', (e) => {
-        const value = e.target.value;
+    // Hilfsfunktion zur Übernahme (damit wir sie mehrfach nutzen können)
+    function confirmSelection(value) {
         if (value) {
             const [newTimezone, newCityName] = value.split('|');
             saveTimezone(newTimezone, newCityName);
             updateTimeAndDate();
             timezoneModal.classList.add('hidden');
         }
+    }
+
+    // Auswahl per ENTER im Suchfeld
+    citySearchInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            confirmSelection(searchableCitiesPulldown.value);
+        }
+    });
+
+    // Auswahl im Pulldown (Change für Tastatur, Click für Maus/Touch)
+    searchableCitiesPulldown.addEventListener('change', (e) => confirmSelection(e.target.value));
+    searchableCitiesPulldown.addEventListener('click', (e) => {
+        // Nur übernehmen, wenn wirklich eine Stadt (mit Value) angeklickt wurde
+        if (e.target.value) confirmSelection(e.target.value);
     });
 
     // Auswahl über die Schnellwahl-Buttons
@@ -566,6 +567,11 @@
     setInterval(() => {
         updateLocalClock();
         updateTimeAndDate();
+    }, 1000);
+
+    // Initialer Aufruf
+    updateLocalClock();
+    updateTimeAndDate();
     }, 1000);
 
     // Initialer Aufruf beim Laden
