@@ -259,22 +259,46 @@
         });
     }
     
-    function populateSearchableCitiesDropdown() {
+        function populateSearchableCitiesDropdown() {
         searchableCitiesPulldown.innerHTML = '';
         const placeholder = document.createElement('option');
-        placeholder.textContent = 'Großstadt / Hauptstadt wählen...';
+        placeholder.textContent = 'Region & Stadt wählen...';
         placeholder.value = '';
         searchableCitiesPulldown.appendChild(placeholder);
 
-        const sortedCities = Object.keys(cityToTimezoneMap).sort();
-        sortedCities.forEach(cityKey => {
-            const option = document.createElement('option');
-            const displayName = cityKey.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
-            option.textContent = displayName;
-            option.value = `${cityToTimezoneMap[cityKey]}|${displayName}`;
-            searchableCitiesPulldown.appendChild(option);
+        // 1. Daten nach Kontinenten sortieren
+        const grouped = {};
+        Object.keys(cityToTimezoneMap).forEach(cityKey => {
+            const timezone = cityToTimezoneMap[cityKey];
+            const continent = timezone.split('/')[0]; // Extrahiert "Europe", "America", etc.
+            
+            if (!grouped[continent]) {
+                grouped[continent] = [];
+            }
+            grouped[continent].push(cityKey);
+        });
+
+        // 2. Kontinente alphabetisch sortieren
+        const sortedContinents = Object.keys(grouped).sort();
+
+        // 3. Für jeden Kontinent eine Gruppe (optgroup) erstellen
+        sortedContinents.forEach(continent => {
+            const group = document.createElement('optgroup');
+            group.label = continent;
+
+            // Städte innerhalb des Kontinents sortieren
+            grouped[continent].sort().forEach(cityKey => {
+                const option = document.createElement('option');
+                const displayName = cityKey.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+                option.textContent = displayName;
+                option.value = `${cityToTimezoneMap[cityKey]}|${displayName}`;
+                group.appendChild(option);
+            });
+
+            searchableCitiesPulldown.appendChild(group);
         });
     }
+
 
     function saveTimezone(timezone, cityName) {
         localStorage.setItem('selectedTimezone', timezone);
