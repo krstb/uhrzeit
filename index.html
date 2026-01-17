@@ -266,46 +266,52 @@
         });
     }
     
-        function populateSearchableCitiesDropdown() {
-        searchableCitiesPulldown.innerHTML = '';
-        const placeholder = document.createElement('option');
-        placeholder.textContent = 'Region & Stadt wählen...';
-        placeholder.value = '';
-        searchableCitiesPulldown.appendChild(placeholder);
+   // 1. Die Funktion zum Befüllen anpassen (WICHTIG: value muss der Anzeigename sein)
+function populateSearchableCitiesList() {
+    const datalist = document.getElementById('searchable-cities-list');
+    if (!datalist) return;
+    datalist.innerHTML = '';
 
-        // 1. Daten nach Kontinenten sortieren
-        const grouped = {};
-        Object.keys(cityToTimezoneMap).forEach(cityKey => {
-            const timezone = cityToTimezoneMap[cityKey];
-            const continent = timezone.split('/')[0]; // Extrahiert "Europe", "America", etc.
-            
-            if (!grouped[continent]) {
-                grouped[continent] = [];
-            }
-            grouped[continent].push(cityKey);
-        });
+    // Wir sortieren die Städte alphabetisch
+    Object.keys(cityToTimezoneMap).sort().forEach(cityKey => {
+        const option = document.createElement('option');
+        // Erzeugt "Berlin" aus "berlin"
+        const displayName = cityKey.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+        option.value = displayName; 
+        datalist.appendChild(option);
+    });
+}
 
-        // 2. Kontinente alphabetisch sortieren
-        const sortedContinents = Object.keys(grouped).sort();
-
-        // 3. Für jeden Kontinent eine Gruppe (optgroup) erstellen
-        sortedContinents.forEach(continent => {
-            const group = document.createElement('optgroup');
-            group.label = continent;
-
-            // Städte innerhalb des Kontinents sortieren
-            grouped[continent].sort().forEach(cityKey => {
-                const option = document.createElement('option');
-                const displayName = cityKey.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
-                option.textContent = displayName;
-                option.value = `${cityToTimezoneMap[cityKey]}|${displayName}`;
-                group.appendChild(option);
-            });
-
-            searchableCitiesPulldown.appendChild(group);
-        });
+// 2. Den Input-Listener so umbauen, dass er die Auswahl erkennt
+citySearchInput.addEventListener('input', (e) => {
+    const inputValue = e.target.value.toLowerCase();
+    
+    // Prüfen, ob der eingegebene Text exakt einem Stadtnamen in unserer Map entspricht
+    if (cityToTimezoneMap[inputValue]) {
+        const newTimezone = cityToTimezoneMap[inputValue];
+        // Schön formatierter Name für die Anzeige
+        const formattedName = e.target.value; 
+        
+        // Speichern und Updaten
+        saveTimezone(newTimezone, formattedName);
+        updateTimeAndDate();
+        
+        // Modal schließen
+        setTimeout(() => {
+            timezoneModal.classList.add('hidden');
+            citySearchInput.value = ''; // Feld leeren für das nächste Mal
+        }, 300);
     }
+});
 
+// 3. Im Öffnen-Event des Modals den Funktionsaufruf korrigieren
+timezoneSelectorButton.addEventListener('click', () => {
+    citySearchInput.value = '';
+    createModalButtons();
+    populateSearchableCitiesList(); // Hier die neue Funktion aufrufen!
+    timezoneModal.classList.remove('hidden');
+    citySearchInput.focus();
+});
 
     function saveTimezone(timezone, cityName) {
         localStorage.setItem('selectedTimezone', timezone);
