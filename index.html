@@ -500,29 +500,7 @@
         citySearchInput.focus();
     });
 
-    // Such-Logik (Filterung des Pulldowns)
-    citySearchInput.addEventListener('input', (e) => {
-        const term = e.target.value.toLowerCase();
-        const options = searchableCitiesPulldown.querySelectorAll('option:not([value=""])');
-        const groups = searchableCitiesPulldown.querySelectorAll('optgroup');
-        let firstMatch = null;
-
-        options.forEach(opt => {
-            const matches = opt.textContent.toLowerCase().includes(term);
-            opt.style.display = matches ? '' : 'none';
-            if (matches && !firstMatch) firstMatch = opt;
-        });
-
-        groups.forEach(group => {
-            const visibleOptions = Array.from(group.querySelectorAll('option')).filter(opt => opt.style.display !== 'none');
-            group.style.display = visibleOptions.length > 0 ? '' : 'none';
-        });
-
-        // WICHTIG: Setzt den Wert, damit man sieht, was ausgewählt würde
-        if (firstMatch && term !== '') {
-            searchableCitiesPulldown.value = firstMatch.value;
-        }
-    });
+    citySearchInput.addEventListener
 
     // Hilfsfunktion zur Übernahme (damit wir sie mehrfach nutzen können)
     function confirmSelection(value) {
