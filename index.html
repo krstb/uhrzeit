@@ -52,21 +52,20 @@
         <h2 class="text-xl font-bold text-white opacity-80 text-center mb-2">Lokale Zeit</h2>
         <div id="local-clock-de" class="flex items-center justify-center text-6xl sm:text-7xl md:text-8xl font-extrabold font-mono tracking-wide text-white w-full tabular-nums">
         </div>
+        <div id="local-date-display" class="mt-2 text-xl font-light tracking-wide text-center text-white opacity-80 tabular-nums">
+        </div>
       </div>
       
       <div class="flex flex-col items-center bg-white/10 backdrop-blur-sm rounded-xl p-6 shadow-lg w-full max-w-sm md:max-w-lg">
         <h2 id="selected-city-title" class="text-xl font-bold text-white opacity-80 text-center mb-2">Ausgewählte Zeit</h2>
         <div id="clock" class="flex flex-col items-center justify-center text-6xl sm:text-7xl md:text-8xl font-extrabold font-mono tracking-wide text-white tabular-nums">
           </div>
+        <div id="date-display" class="text-xl font-light tracking-wide text-center text-white opacity-80 tabular-nums">
+        </div>
         <div id="time-difference-display" class="mt-2 text-base sm:text-lg md:text-xl font-light tracking-wide text-center text-white opacity-80">
         </div>
       </div>
       
-      <div class="bg-white/10 backdrop-blur-sm rounded-xl p-6 shadow-lg">
-        <h2 class="text-xl font-bold text-white opacity-80 text-center mb-2">Datum</h2>
-        <div id="date-display" class="text-xl sm:text-2xl md:text-3xl font-light tracking-wide text-center text-white opacity-80 tabular-nums">
-        </div>
-      </div>
     </div>
 
     <div>
@@ -100,6 +99,7 @@
   <script type="module">
     // UI-Elemente
     const localClockDeElement = document.getElementById('local-clock-de');
+    const localDateDeElement = document.getElementById('local-date-display');
     const clockElement = document.getElementById('clock');
     const timezoneSelectorButton = document.getElementById('timezone-selector-button');
     const dateElement = document.getElementById('date-display');
@@ -664,7 +664,6 @@
         });
     }
 
-
     function saveTimezone(timezone, cityName) {
         localStorage.setItem('selectedTimezone', timezone);
         localStorage.setItem('selectedCityName', cityName);
@@ -793,8 +792,12 @@
     }
 
     function updateLocalClock() {
-      const timeStringDe = new Date().toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
+      const now = new Date();
+      const timeStringDe = now.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
+      const dateStringDe = now.toLocaleDateString('de-DE', { weekday: 'long', day: '2-digit', month: '2-digit', year: 'numeric' });
+      
       if (localClockDeElement) localClockDeElement.textContent = timeStringDe;
+      if (localDateDeElement) localDateDeElement.textContent = dateStringDe;
     }
     
     // KORRIGIERTE FUNKTION: Entfernt die manuelle Berechnung für Pacific/Kiritimati
