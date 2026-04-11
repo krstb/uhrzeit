@@ -1,0 +1,917 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Uhrzeit</title>
+  
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" type="image/png" href="icon-192.png"> 
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <meta name="theme-color" content="#000000">
+    <meta name="color-scheme" content="light">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <link rel="apple-touch-icon" href="icon-192.png">
+ 
+    <script>
+      // Service Worker Registrierung
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('sw.js')
+            .catch(err => console.log('SW Fehler:', err));
+        });
+      }
+    </script>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;800&family=JetBrains+Mono:wght@400;700&display=swap');
+
+    /* Fix für PWA-Ränder */
+    html {background-color: #000000 !important;overscroll-behavior-y: none;}
+    
+    body {
+      font-family: 'Inter', sans-serif;
+    }
+    .modal-backdrop {
+        background-color: rgba(0, 0, 0, 0.5);
+    }
+    .tabular-nums {
+        font-variant-numeric: tabular-nums;
+    }
+  </style>
+</head>
+<body class="bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 min-h-screen flex flex-col p-4">
+
+  <div class="flex flex-col items-center space-y-6 w-full mt-4">
+    
+    <div class="flex flex-col items-center space-y-4 w-full">
+
+      <div class="bg-white/10 backdrop-blur-sm rounded-xl p-6 shadow-lg flex flex-col items-center w-full max-w-sm md:max-w-lg">
+        <h2 class="text-xl font-bold text-white opacity-80 text-center mb-2">Lokale Zeit</h2>
+        <div id="local-clock-de" class="flex items-center justify-center text-6xl sm:text-7xl md:text-8xl font-extrabold font-mono tracking-wide text-white w-full tabular-nums">
+        </div>
+        <div id="local-date-display" class="mt-2 text-xl font-light tracking-wide text-center text-white opacity-80 tabular-nums">
+        </div>
+      </div>
+      
+      <div class="flex flex-col items-center bg-white/10 backdrop-blur-sm rounded-xl p-6 shadow-lg w-full max-w-sm md:max-w-lg">
+        <h2 id="selected-city-title" class="text-xl font-bold text-white opacity-80 text-center mb-2">Ausgewählte Zeit</h2>
+        <div id="clock" class="flex flex-col items-center justify-center text-6xl sm:text-7xl md:text-8xl font-extrabold font-mono tracking-wide text-white tabular-nums">
+          </div>
+        <div id="date-display" class="text-xl font-light tracking-wide text-center text-white opacity-80 tabular-nums">
+        </div>
+        <div id="time-difference-display" class="mt-2 text-base sm:text-lg md:text-xl font-light tracking-wide text-center text-white opacity-80">
+        </div>
+      </div>
+      
+    </div>
+
+    <div>
+        <button id="timezone-selector-button" class="text-white p-3 rounded-full bg-white/20 hover:bg-white/30 transition-colors duration-200 flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-white/50">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m0 0a9 9 0 019-9m-9 9a9 9 0 009 9" />
+            </svg>
+        </button>
+    </div>
+    
+    <div id="timezone-modal" class="hidden fixed inset-0 flex items-center justify-center p-4 z-50 modal-backdrop">
+  
+  <div class="bg-white backdrop-blur-xl rounded-xl p-6 shadow-2xl flex flex-col space-y-4 max-h-[90vh] overflow-y-auto w-full max-w-[95%] sm:max-w-lg md:max-w-xl">
+    
+    <h3 class="text-2xl font-bold text-black mb-2">Zeitzone</h3>
+    
+    <div class="flex flex-col space-y-2">
+        <label for="city-search-input" class="block text-xl font-bold text-black text-center">Land oder Stadt suchen</label>
+        <input type="text" id="city-search-input" list="searchable-cities-list" placeholder="Name eingeben..." class="w-full p-3 text-lg text-black bg-white/50 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-inner" />
+        <datalist id="searchable-cities-list"></datalist>
+    </div>
+
+        <div id="modal-options-container" class="flex flex-col space-y-3 pt-4 border-t border-gray-400">
+          </div>
+
+        <button id="close-modal" class="mt-4 text-white text-lg px-4 py-2 rounded-lg bg-red-500/50 hover:bg-red-500/70 transition-colors duration-200">Schließen</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    // UI-Elemente
+    const localClockDeElement = document.getElementById('local-clock-de');
+    const localDateDeElement = document.getElementById('local-date-display');
+    const clockElement = document.getElementById('clock');
+    const timezoneSelectorButton = document.getElementById('timezone-selector-button');
+    const dateElement = document.getElementById('date-display');
+    const timezoneModal = document.getElementById('timezone-modal');
+    const selectedCityTitleElement = document.getElementById('selected-city-title');
+    const timeDifferenceElement = document.getElementById('time-difference-display');
+    const modalOptionsContainer = document.getElementById('modal-options-container');
+    const citySearchInput = document.getElementById('city-search-input');
+    const searchableCitiesList = document.getElementById('searchable-cities-list');
+
+    // Konstanten für spezielle Zeitzonen (optional, aber empfohlen für Lesbarkeit)
+    const KIRIBATI_OST_TZ = 'Pacific/Kiritimati'; 
+
+    // Datenbank mit Hauptstädten und Großstädten sowie Ländern 
+    const cityToTimezoneMap = {
+    'abu dhabi': 'Asia/Dubai',
+    'accra': 'Africa/Accra',
+    'adelaide': 'Australia/Adelaide',
+    'afghanistan': 'Asia/Kabul',
+    'alexandria': 'Africa/Cairo',
+    'albanien': 'Europe/Tirane',
+    'algerien': 'Africa/Algiers',
+    'algier': 'Africa/Algiers',
+    'amman': 'Asia/Amman',
+    'amsterdam': 'Europe/Amsterdam',
+    'anchorage': 'America/Anchorage',
+    'andorra': 'Europe/Andorra',
+    'angola': 'Africa/Luanda',
+    'ankara': 'Europe/Istanbul',
+    'antananarivo': 'Indian/Antananarivo',
+    'antigua und barbuda': 'America/Antigua',
+    'antalya': 'Europe/Istanbul',
+    'apia': 'Pacific/Apia',
+    'ägypten': 'Africa/Cairo',
+    'äquatorialguinea': 'Africa/Malabo',
+    'argentinien': 'America/Argentina/Buenos_Aires',
+    'armenien': 'Asia/Yerevan',
+    'aschgabat': 'Asia/Ashgabat',
+    'aserbaidschan': 'Asia/Baku',
+    'asmara': 'Africa/Asmara',
+    'astana': 'Asia/Almaty',
+    'asuncion': 'America/Asuncion',
+    'athen': 'Europe/Athens',
+    'äthiopien': 'Africa/Addis_Ababa',
+    'auckland': 'Pacific/Auckland',
+    'australien perth': 'Australia/Perth',
+    'australien adelaide': 'Australia/Adelaide',
+    'australien sydney': 'Australia/Sydney',
+    'bagdad': 'Asia/Baghdad',
+    'bahamas': 'America/Nassau',
+    'bahrain': 'Asia/Bahrain',
+    'baikonur': 'Asia/Almaty',
+    'baku': 'Asia/Baku',
+    'bali': 'Asia/Makassar',
+    'bamako': 'Africa/Bamako',
+    'bangalore': 'Asia/Kolkata',
+    'bangkok': 'Asia/Bangkok',
+    'bangladesch': 'Asia/Dhaka',
+    'bangui': 'Africa/Bangui',
+    'banjul': 'Africa/Banjul',
+    'barbados': 'America/Barbados',
+    'barcelona': 'Europe/Madrid',
+    'basseterre': 'America/St_Kitts',
+    'beirut': 'Asia/Beirut',
+    'belgien': 'Europe/Brussels',
+    'belgrad': 'Europe/Belgrade',
+    'belize': 'America/Belize',
+    'belmopan': 'America/Belize',
+    'benin': 'Africa/Porto-Novo',
+    'berlin': 'Europe/Berlin',
+    'bern': 'Europe/Zurich',
+    'bhutan': 'Asia/Thimphu',
+    'binz': 'Europe/Berlin',
+    'birmingham': 'Europe/London',
+    'bischkek': 'Asia/Bishkek',
+    'bissau': 'Africa/Bissau',
+    'bogotá': 'America/Bogota',
+    'bolivien': 'America/La_Paz',
+    'bosnien und herzegowina': 'Europe/Sarajevo',
+    'boston': 'America/New_York',
+    'botswana': 'Africa/Gaborone',
+    'brasilia': 'America/Sao_Paulo',
+    'brasilien rio branco': 'America/Rio_Branco',
+    'brasilien manaus': 'America/Manaus',
+    'brasilien sao paulo': 'America/Sao_Paulo',
+    'brasilien noronha': 'America/Noronha',
+    'bratislava': 'Europe/Bratislava',
+    'brazzaville': 'Africa/Brazzaville',
+    'bridgetown': 'America/Barbados',
+    'brisbane': 'Australia/Brisbane',
+    'brunei': 'Asia/Brunei',
+    'brüssel': 'Europe/Brussels',
+    'budapest': 'Europe/Budapest',
+    'buenos aires': 'America/Argentina/Buenos_Aires',
+    'bukarest': 'Europe/Bucharest',
+    'bulgarien': 'Europe/Sofia',
+    'burkina faso': 'Africa/Ouagadougou',
+    'burundi': 'Africa/Bujumbura',
+    'busan': 'Asia/Seoul',
+    'canberra': 'Australia/Sydney',
+    'cancun': 'America/Cancun',
+    'cape canaveral': 'America/New_York',
+    'caracas': 'America/Caracas',
+    'casablanca': 'Africa/Casablanca',
+    'castries': 'America/St_Lucia',
+    'chennai': 'Asia/Kolkata',
+    'chicago': 'America/Chicago',
+    'china': 'Asia/Shanghai',
+    'chisinau': 'Europe/Chisinau',
+    'chongqing': 'Asia/Shanghai',
+    'colombo': 'Asia/Colombo',
+    'conakry': 'Africa/Conakry',
+    'costa rica': 'America/Costa_Rica',
+    'dakar': 'Africa/Dakar',
+    'damaskus': 'Asia/Damascus',
+    'darwin': 'Australia/Darwin',
+    'deutschland': 'Europe/Berlin',
+    'dhaka': 'Asia/Dhaka',
+    'dili': 'Asia/Dili',
+    'dodoma': 'Africa/Dar_es_Salaam',
+    'doha': 'Asia/Qatar',
+    'dominica': 'America/Dominica',
+    'dominikanische republik': 'America/Santo_Domingo',
+    'dresden': 'Europe/Berlin',
+    'dschibuti': 'Africa/Djibouti',
+    'dschuba': 'Africa/Juba',
+    'dubai': 'Asia/Dubai',
+    'dublin': 'Europe/Dublin',
+    'duschanbe': 'Asia/Dushanbe',
+    'el salvador': 'America/El_Salvador',
+    'elfenbeinküste': 'Africa/Abidjan',
+    'eritrea': 'Africa/Asmara',
+    'eriwan': 'Asia/Yerevan',
+    'estland': 'Europe/Tallinn',
+    'eswatini': 'Africa/Mbabane',
+    'fidschi': 'Pacific/Fiji',
+    'finnland': 'Europe/Helsinki',
+    'frankfurt': 'Europe/Berlin',
+    'frankreich': 'Europe/Paris',
+    'freetown': 'Africa/Freetown',
+    'funafuti': 'Pacific/Funafuti',
+    'gaborone': 'Africa/Gaborone',
+    'gabun': 'Africa/Libreville',
+    'gambia': 'Africa/Banjul',
+    'gaza': 'Asia/Gaza',
+    'genf': 'Europe/Zurich',
+    'georgien': 'Asia/Tbilisi',
+    'georgetown': 'America/Guyana',
+    'ghana': 'Africa/Accra',
+    'glasgow': 'Europe/London',
+    'grenada': 'America/Grenada',
+    'griechenland': 'Europe/Athens',
+    'grönland': 'America/Nuuk',
+    'guadalajara': 'America/Mexico_City',
+    'guangzhou': 'Asia/Shanghai',
+    'guatemala': 'America/Guatemala',
+    'guatemala-stadt': 'America/Guatemala',
+    'guayaquil': 'America/Guayaquil',
+    'guinea': 'Africa/Conakry',
+    'guinea-bissau': 'Africa/Bissau',
+    'guyana': 'America/Guyana',
+    'haiti': 'America/Port-au-Prince',
+    'hamburg': 'Europe/Berlin',
+    'hanoi': 'Asia/Ho_Chi_Minh',
+    'harare': 'Africa/Harare',
+    'havanna': 'America/Havana',
+    'helsinki': 'Europe/Helsinki',
+    'ho-chi-minh-stadt': 'Asia/Ho_Chi_Minh',
+    'honduras': 'America/Tegucigalpa',
+    'hongkong': 'Asia/Hong_Kong',
+    'honiara': 'Pacific/Guadalcanal',
+    'honolulu': 'Pacific/Honolulu',
+    'houston': 'America/Chicago',
+    'indien': 'Asia/Kolkata',
+    'indonesien jakarta': 'Asia/Jakarta',
+    'indonesien makassar': 'Asia/Makassar',
+    'indonesien jayapura': 'Asia/Jayapura',
+    'irak': 'Asia/Baghdad',
+    'iran': 'Asia/Tehran',
+    'irland': 'Europe/Dublin',
+    'island': 'Atlantic/Reykjavik',
+    'islamabad': 'Asia/Karachi',
+    'israel': 'Asia/Jerusalem',
+    'istanbul': 'Europe/Istanbul',
+    'italien': 'Europe/Rome',
+    'izmir': 'Europe/Istanbul',
+    'jakarta': 'Asia/Jakarta',
+    'jamaika': 'America/Jamaica',
+    'japan': 'Asia/Tokyo',
+    'jaunde': 'Africa/Douala',
+    'jeddah': 'Asia/Riyadh',
+    'jemen': 'Asia/Aden',
+    'jerusalem': 'Asia/Jerusalem',
+    'johannesburg': 'Africa/Johannesburg',
+    'jordanien': 'Asia/Amman',
+    'kabul': 'Asia/Kabul',
+    'kairo': 'Africa/Cairo',
+    'kambodscha': 'Asia/Phnom_Penh',
+    'kamerun': 'Africa/Douala',
+    'kampala': 'Africa/Kampala',
+    'kanada vancouver': 'America/Vancouver',
+    'kanada edmonton': 'America/Edmonton',
+    'kanada winnipeg': 'America/Winnipeg',
+    'kanada toronto': 'America/Toronto',
+    'kanada halifax': 'America/Halifax',
+    'kanada st johns': 'America/St_Johns',
+    'kanarische inseln': 'Atlantic/Canary',
+    'kapstadt': 'Africa/Johannesburg',
+    'kapverden': 'Atlantic/Cape_Verde',
+    'karachi': 'Asia/Karachi',
+    'katar': 'Asia/Qatar',
+    'kathmandu': 'Asia/Kathmandu',
+    'kenia': 'Africa/Nairobi',
+    'khartum': 'Africa/Khartoum',
+    'kiew': 'Europe/Kiev',
+    'kigali': 'Africa/Kigali',
+    'kingston': 'America/Jamaica',
+    'kingstown': 'America/St_Vincent',
+    'kinshasa': 'Africa/Kinshasa',
+    'kiribati ost': 'Pacific/Kiritimati',
+    'kolkata': 'Asia/Kolkata',
+    'kolumbien': 'America/Bogota',
+    'komoren': 'Indian/Comoro',
+    'kopenhagen': 'Europe/Copenhagen',
+    'kourou': 'America/Cayenne',
+    'kroatien': 'Europe/Zagreb',
+    'kuba': 'America/Havana',
+    'kuala lumpur': 'Asia/Kuala_Lumpur',
+    'kuwait': 'Asia/Kuwait',
+    'kuwait-stadt': 'Asia/Kuwait',
+    'köln': 'Europe/Berlin',
+    'kyoto': 'Asia/Tokyo',
+    'la paz': 'America/La_Paz',
+    'lagos': 'Africa/Lagos',
+    'laos': 'Asia/Vientiane',
+    'las vegas': 'America/Los_Angeles',
+    'leipzig': 'Europe/Berlin',
+    'lesotho': 'Africa/Maseru',
+    'lettland': 'Europe/Riga',
+    'libanon': 'Asia/Beirut',
+    'liberia': 'Africa/Monrovia',
+    'libreville': 'Africa/Libreville',
+    'libyen': 'Africa/Tripoli',
+    'liechtenstein': 'Europe/Vaduz',
+    'lilongwe': 'Africa/Blantyre',
+    'lima': 'America/Lima',
+    'lissabon': 'Europe/Lisbon',
+    'litauen': 'Europe/Vilnius',
+    'ljubljana': 'Europe/Ljubljana',
+    'lome': 'Africa/Lome',
+    'london': 'Europe/London',
+    'los angeles': 'America/Los_Angeles',
+    'luanda': 'Africa/Luanda',
+    'luebeck': 'Europe/Berlin',
+    'lusaka': 'Africa/Lusaka',
+    'luxemburg': 'Europe/Luxembourg',
+    'lyon': 'Europe/Paris',
+    'madagaskar': 'Indian/Antananarivo',
+    'madrid': 'Europe/Madrid',
+    'mailand': 'Europe/Rome',
+    'majuro': 'Pacific/Majuro',
+    'malabo': 'Africa/Malabo',
+    'malawi': 'Africa/Blantyre',
+    'malaysia': 'Asia/Kuala_Lumpur',
+    'malediven': 'Indian/Maldives',
+    'male': 'Indian/Maldives',
+    'mali': 'Africa/Bamako',
+    'mallorca': 'Europe/Madrid',
+    'malta': 'Europe/Malta',
+    'managua': 'America/Managua',
+    'manama': 'Asia/Bahrain',
+    'manchester': 'Europe/London',
+    'manila': 'Asia/Manila',
+    'maputo': 'Africa/Maputo',
+    'marokko': 'Africa/Casablanca',
+    'marrakesch': 'Africa/Casablanca',
+    'marseille': 'Europe/Paris',
+    'marshallinseln': 'Pacific/Majuro',
+    'maseru': 'Africa/Maseru',
+    'maskat': 'Asia/Muscat',
+    'mauretanien': 'Africa/Nouakchott',
+    'mauritius': 'Indian/Mauritius',
+    'mbabane': 'Africa/Mbabane',
+    'medellin': 'America/Bogota',
+    'mekka': 'Asia/Riyadh',
+    'melbourne': 'Australia/Melbourne',
+    'mexiko': 'America/Mexico_City',
+    'mexiko-stadt': 'America/Mexico_City',
+    'miami': 'America/New_York',
+    'mikronesien': 'Pacific/Pohnpei',
+    'minsk': 'Europe/Minsk',
+    'mogadischu': 'Africa/Mogadishu',
+    'moldau': 'Europe/Chisinau',
+    'monaco': 'Europe/Monaco',
+    'monrovia': 'Africa/Monrovia',
+    'montenegro': 'Europe/Podgorica',
+    'monterrey': 'America/Monterrey',
+    'montevideo': 'America/Montevideo',
+    'montreal': 'America/Toronto',
+    'moroni': 'Indian/Comoro',
+    'mosambik': 'Africa/Maputo',
+    'moskau': 'Europe/Moscow',
+    'mumbai': 'Asia/Kolkata',
+    'myanmar': 'Asia/Yangon',
+    'münchen': 'Europe/Berlin',
+    'nagoya': 'Asia/Tokyo',
+    'nairobi': 'Africa/Nairobi',
+    'namibia': 'Africa/Windhoek',
+    'nassau': 'America/Nassau',
+    'nauru': 'Pacific/Nauru',
+    'naypyidaw': 'Asia/Yangon',
+    'neapel': 'Europe/Rome',
+    'nepal': 'Asia/Kathmandu',
+    'neu-delhi': 'Asia/Kolkata',
+    'new york': 'America/New_York',
+    'ngerulmud': 'Pacific/Palau',
+    'niamey': 'Africa/Niamey',
+    'nicaragua': 'America/Managua',
+    'niederlande': 'Europe/Amsterdam',
+    'niger': 'Africa/Niamey',
+    'nigeria': 'Africa/Lagos',
+    'nikosia': 'Asia/Nicosia',
+    'nizza': 'Europe/Paris',
+    'nordkorea': 'Asia/Pyongyang',
+    'nordmazedonien': 'Europe/Skopje',
+    'norwegen': 'Europe/Oslo',
+    'nouakchott': 'Africa/Nouakchott',
+    'nuku alofa': 'Pacific/Tongatapu',
+    'nuuk': 'America/Nuuk',
+    'n djamena': 'Africa/Ndjamena',
+    'oman': 'Asia/Muscat',
+    'osaka': 'Asia/Tokyo',
+    'oslo': 'Europe/Oslo',
+    'osttimor': 'Asia/Dili',
+    'ottawa': 'America/Toronto',
+    'ouagadougou': 'Africa/Ouagadougou',
+    'österreich': 'Europe/Vienna',
+    'pakistan': 'Asia/Karachi',
+    'palästina': 'Asia/Gaza',
+    'palikir': 'Pacific/Pohnpei',
+    'palma': 'Europe/Madrid',
+    'panama-stadt': 'America/Panama',
+    'paraguay': 'America/Asuncion',
+    'paramaribo': 'America/Paramaribo',
+    'paris': 'Europe/Paris',
+    'pattaya': 'Asia/Bangkok',
+    'peking': 'Asia/Shanghai',
+    'perth': 'Australia/Perth',
+    'peru': 'America/Lima',
+    'philippinen': 'Asia/Manila',
+    'phnom penh': 'Asia/Phnom_Penh',
+    'phoenix': 'America/Phoenix',
+    'phuket': 'Asia/Bangkok',
+    'pjöngjang': 'Asia/Pyongyang',
+    'podgorica': 'Europe/Podgorica',
+    'polen': 'Europe/Warsaw',
+    'port louis': 'Indian/Mauritius',
+    'port moresby': 'Pacific/Port_Moresby',
+    'port of spain': 'America/Port_of_Spain',
+    'port vila': 'Pacific/Efate',
+    'port-au-prince': 'America/Port-au-Prince',
+    'portugal': 'Europe/Lisbon',
+    'prag': 'Europe/Prague',
+    'praia': 'Atlantic/Cape_Verde',
+    'pretoria': 'Africa/Johannesburg',
+    'quito': 'America/Guayaquil',
+    'rabat': 'Africa/Casablanca',
+    'reykjavik': 'Atlantic/Reykjavik',
+    'riad': 'Asia/Riyadh',
+    'riga': 'Europe/Riga',
+    'rio de janeiro': 'America/Sao_Paulo',
+    'rom': 'Europe/Rome',
+    'roseau': 'America/Dominica',
+    'ruanda': 'Africa/Kigali',
+    'rumänien': 'Europe/Bucharest',
+    'russland kaliningrad': 'Europe/Kaliningrad',
+    'russland moskau': 'Europe/Moscow',
+    'russland samara': 'Europe/Samara',
+    'russland yekaterinburg': 'Asia/Yekaterinburg',
+    'russland omsk': 'Asia/Omsk',
+    'russland krasnoyarsk': 'Asia/Krasnoyarsk',
+    'russland irkutsk': 'Asia/Irkutsk',
+    'russland yakutsk': 'Asia/Yakutsk',
+    'russland vladivostok': 'Asia/Vladivostok',
+    'russland magadan': 'Asia/Magadan',
+    'russland anadyr': 'Asia/Anadyr',
+    'sambia': 'Africa/Lusaka',
+    'samoa': 'Pacific/Pago_Pago',
+    'san francisco': 'America/Los_Angeles',
+    'san jose': 'America/Costa_Rica',
+    'san marino': 'Europe/San_Marino',
+    'san salvador': 'America/El_Salvador',
+    'sanaa': 'Asia/Aden',
+    'sankt petersburg': 'Europe/Moscow',
+    'santiago': 'America/Santiago',
+    'santo domingo': 'America/Santo_Domingo',
+    'sao paulo': 'America/Sao_Paulo',
+    'saudi-arabien': 'Asia/Riyadh',
+    'sao tome': 'Africa/Sao_Tome',
+    'sarajevo': 'Europe/Sarajevo',
+    'schweden': 'Europe/Stockholm',
+    'schweiz': 'Europe/Zurich',
+    'seattle': 'America/Los_Angeles',
+    'senegal': 'Africa/Dakar',
+    'seoul': 'Asia/Seoul',
+    'serbien': 'Europe/Belgrade',
+    'seychellen': 'Indian/Mahe',
+    'shanghai': 'Asia/Shanghai',
+    'shenzhen': 'Asia/Shanghai',
+    'sierra leone': 'Africa/Freetown',
+    'simbabwe': 'Africa/Harare',
+    'singapur': 'Asia/Singapore',
+    'skopje': 'Europe/Skopje',
+    'slowakei': 'Europe/Bratislava',
+    'slowenien': 'Europe/Ljubljana',
+    'sofia': 'Europe/Sofia',
+    'somalia': 'Africa/Mogadishu',
+    'spanien': 'Europe/Madrid',
+    'sri lanka': 'Asia/Colombo',
+    'st. george': 'America/Grenada',
+    'st. john': 'America/Antigua',
+    'stadtbergen': 'Europe/Berlin',
+    'stockholm': 'Europe/Stockholm',
+    'sudan': 'Africa/Khartoum',
+    'surat': 'Asia/Kolkata',
+    'suva': 'Pacific/Fiji',
+    'sydney': 'Australia/Sydney',
+    'syrien': 'Asia/Damascus',
+    'südafrika': 'Africa/Johannesburg',
+    'südkorea': 'Asia/Seoul',
+    'südsudan': 'Africa/Juba',
+    'tadschikistan': 'Asia/Dushanbe',
+    'taipeh': 'Asia/Taipei',
+    'taiwan': 'Asia/Taipei',
+    'tallinn': 'Europe/Tallinn',
+    'tanegashima': 'Asia/Tokyo',
+    'tansania': 'Africa/Dar_es_Salaam',
+    'tarawa': 'Pacific/Tarawa',
+    'taschkent': 'Asia/Tashkent',
+    'tegucigalpa': 'America/Tegucigalpa',
+    'teheran': 'Asia/Tehran',
+    'tel aviv': 'Asia/Jerusalem',
+    'thailand': 'Asia/Bangkok',
+    'thimphu': 'Asia/Thimphu',
+    'tiflis': 'Asia/Tbilisi',
+    'timor-leste': 'Asia/Dili',
+    'tirana': 'Europe/Tirana',
+    'togo': 'Africa/Lome',
+    'tokio': 'Asia/Tokyo',
+    'toronto': 'America/Toronto',
+    'tripolis': 'Africa/Tripoli',
+    'tschechien': 'Europe/Prague',
+    'tunesien': 'Africa/Tunis',
+    'tuvalu': 'Pacific/Funafuti',
+    'türkei': 'Europe/Istanbul',
+    'turkmenistan': 'Asia/Ashgabat',
+    'uganda': 'Africa/Kampala',
+    'ukraine': 'Europe/Kyiv',
+    'ulaanbaatar': 'Asia/Ulaanbaatar',
+    'ungarn': 'Europe/Budapest',
+    'uruguay': 'America/Montevideo',
+    'usa alaska': 'America/Anchorage',
+    'usa hawaii': 'Pacific/Honolulu',
+    'usa los angeles': 'America/Los_Angeles',
+    'usa denver': 'America/Denver',
+    'usa chicago': 'America/Chicago',
+    'usa new york': 'America/New_York',
+    'usbekistan': 'Asia/Tashkent',
+    'vaduz': 'Europe/Vaduz',
+    'valencia': 'Europe/Madrid',
+    'valletta': 'Europe/Malta',
+    'vancouver': 'America/Vancouver',
+    'vanuatu': 'Pacific/Efate',
+    'vatikanstadt': 'Europe/Vatican',
+    'venedig': 'Europe/Rome',
+    'venezuela': 'America/Caracas',
+    'vereinigte arabische emirate': 'Asia/Dubai',
+    'victoria': 'Indian/Mahe',
+    'vientiane': 'Asia/Vientiane',
+    'vietnam': 'Asia/Ho_Chi_Minh',
+    'vilnius': 'Europe/Vilnius',
+    'warschau': 'Europe/Warsaw',
+    'washington': 'America/New_York',
+    'wellington': 'Pacific/Auckland',
+    'wien': 'Europe/Vienna',
+    'windhoek': 'Africa/Windhoek',
+    'yaren': 'Pacific/Nauru',
+    'yokohama': 'Asia/Tokyo',
+    'zagreb': 'Europe/Zagreb',
+    'zypern': 'Asia/Nicosia',
+    'zürich': 'Europe/Zurich',
+ 
+    'augsburg': 'Europe/Berlin',
+    'eucla': 'Australia/Eucla',
+    'ibiza': 'Europe/Madrid',
+    'kiew': 'Europe/Kyiv',
+    'las vegas': 'America/Los_Angeles',
+    'mallorca': 'Europe/Madrid',
+    'phuket': 'Asia/Bangkok',
+    'rangun': 'Asia/Yangon',
+    'yangon': 'Asia/Yangon',
+      
+    'charlotte': 'America/New_York',
+    'atlanta': 'America/New_York',
+    'detroit': 'America/New_York',
+    'indianapolis': 'America/New_York',
+    'chengdu': 'Asia/Shanghai',
+    'wuhan': 'Asia/Shanghai',
+    'florida': 'America/New_York'
+
+      
+    
+};
+    
+    // Kuratierte Liste für Buttons
+    const geographicTimezones = [
+        { name: 'Berlin', timezone: 'Europe/Berlin' }, 
+        { name: 'Stadtbergen', timezone: 'Europe/Berlin' },
+        { name: 'Kiribati Ost *', timezone: KIRIBATI_OST_TZ }, 
+        { name: 'Amerik. Samoa *', timezone: 'Pacific/Pago_Pago' }, 
+         ];
+    const specialTimezones = [
+        { name: 'Astrozeit (Stadtb.)', timezone: 'astro' }, { name: 'MEZ', timezone: 'MEZ' },
+        { name: 'MESZ', timezone: 'MESZ' }, { name: 'UTC / GMT', timezone: 'Etc/UTC' },
+        { name: 'WOZ (Stadtb.)', timezone: 'wot' },
+    ];
+    
+    geographicTimezones.sort((a, b) => a.name.localeCompare(b.name));
+    specialTimezones.sort((a, b) => a.name.localeCompare(b.name));
+
+    let selectedTimezone = localStorage.getItem('selectedTimezone') || 'Europe/Berlin';
+    let selectedCityName = localStorage.getItem('selectedCityName') || 'Berlin';
+    
+    function createModalButtons() {
+        modalOptionsContainer.innerHTML = '';
+        const geographicHeading = document.createElement('h4');
+        geographicHeading.className = "text-xl font-bold text-black text-center";
+        geographicHeading.textContent = "Häufige Zeitzonen";
+        modalOptionsContainer.appendChild(geographicHeading);
+
+        const geographicContainer = document.createElement('div');
+        geographicContainer.className = "grid grid-cols-1 sm:grid-cols-2 gap-2";
+        modalOptionsContainer.appendChild(geographicContainer);
+
+        geographicTimezones.forEach(option => {
+            const button = document.createElement('button');
+            button.className = "modal-option text-black text-lg px-4 py-2 rounded-lg bg-indigo-500/50 hover:bg-indigo-500/70 transition-colors duration-200";
+            button.textContent = option.name;
+            button.dataset.timezone = option.timezone;
+            button.dataset.cityName = option.name.replace(' *', ''); // Speichern des Namens ohne *
+            geographicContainer.appendChild(button);
+        });
+        
+        const separator = document.createElement('div');
+        separator.className = "w-full h-1 my-4 bg-gray-400 rounded-full";
+        modalOptionsContainer.appendChild(separator);
+        
+        const specialHeading = document.createElement('h4');
+        specialHeading.className = "text-xl font-bold text-black text-center";
+        specialHeading.textContent = "Spezielle Zeitzonen";
+        modalOptionsContainer.appendChild(specialHeading);
+
+        const specialContainer = document.createElement('div');
+        specialContainer.className = "grid grid-cols-1 sm:grid-cols-2 gap-2";
+        modalOptionsContainer.appendChild(specialContainer);
+
+        specialTimezones.forEach(option => {
+            const button = document.createElement('button');
+            button.className = "modal-option text-black text-lg px-4 py-2 rounded-lg bg-yellow-500/50 hover:bg-yellow-500/70 transition-colors duration-200";
+            button.textContent = option.name;
+            button.dataset.timezone = option.timezone;
+            button.dataset.cityName = option.name.replace(' *', '');
+            specialContainer.appendChild(button);
+        });
+    }
+    
+    function populateSearchableCitiesList() {
+        searchableCitiesList.innerHTML = '';
+        Object.keys(cityToTimezoneMap).sort().forEach(cityKey => {
+            const option = document.createElement('option');
+            option.value = cityKey.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+            searchableCitiesList.appendChild(option);
+        });
+    }
+
+    function saveTimezone(timezone, cityName) {
+        localStorage.setItem('selectedTimezone', timezone);
+        localStorage.setItem('selectedCityName', cityName);
+        selectedTimezone = timezone;
+        selectedCityName = cityName;
+    }
+    
+    // KORRIGIERTE FUNKTION: Ermittelt den aktuellen UTC-Offset in Stunden (robustere IANA-Erkennung)
+    function getOffsetHours(timezone) {
+        // Manuelle Offsets beibehalten:
+        if (timezone === 'MEZ') return 1;
+        if (timezone === 'MESZ') return 2;
+        if (timezone === 'wot' || timezone === 'astro') return null; // Keine Stunden-Differenz
+        
+        // Fallback für lokale Zeitzone (sollte den Offset über IANA-Abfrage im try-Block ermitteln)
+        if (timezone === Intl.DateTimeFormat().resolvedOptions().timeZone) {
+             // Wenn Intl nicht funktioniert, der manuelle Browser-Offset
+             try {
+                // Versucht, den Offset dynamisch zu ermitteln, bevor auf getTimezoneOffset zurückgegriffen wird
+                return getOffsetHoursDynamic(timezone); 
+             } catch (e) {
+                return new Date().getTimezoneOffset() / -60;
+             }
+        }
+
+        // Dynamische IANA-Abfrage für alle anderen Zeitzonen
+        return getOffsetHoursDynamic(timezone);
+    }
+    
+    function getOffsetHoursDynamic(timezone) {
+        try {
+            const date = new Date();
+            const formatter = new Intl.DateTimeFormat('en-US', {
+                timeZone: timezone,
+                timeZoneName: 'shortOffset',
+                hour: '2-digit'
+            });
+            
+            const parts = formatter.formatToParts(date);
+            // Sucht nach dem Zeitzonen-Namen, der GMT/UTC enthält
+            const offsetPart = parts.find(p => p.type === 'timeZoneName' && (p.value.startsWith('GMT') || p.value.startsWith('UTC')));
+            
+            if (offsetPart) {
+                const offsetString = offsetPart.value;
+                // Extrahiert den numerischen Offset-Teil
+                const match = offsetString.match(/([+-]\d{1,2}(:\d{2})?)/);
+
+                if (match) {
+                    const offset = match[1];
+                    if (offset.includes(':')) {
+                        // Behandelt Minuten-Offsets (z.B. +5:30)
+                        const parts = offset.match(/([+-])(\d{1,2}):(\d{2})/);
+                        if (parts) {
+                            const sign = parts[1] === '-' ? -1 : 1;
+                            const h = Number(parts[2]);
+                            const m = Number(parts[3]);
+                            return sign * (h + m / 60);
+                        }
+                    }
+                    // Fängt einfache Offsets wie +10 oder -5 ab
+                    return Number(offset);
+                } 
+                
+                // Wenn der String nur "GMT" oder "UTC" ist (Offset 0)
+                if (offsetString === 'GMT' || offsetString === 'UTC' || offsetString === 'Z') {
+                    return 0;
+                }
+            }
+        } catch (e) {
+            console.error(`Fehler bei der Offset-Ermittlung für ${timezone}:`, e);
+        }
+        
+        return null; // Wenn alles fehlschlägt
+    }
+
+    // Funktion: Berechnet die Differenz basierend auf den UTC-Offsets
+    function calculateTimeDifference() {
+        // Sicherstellen, dass die lokale Zeitzone als IANA-String vorliegt
+        const localTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone; 
+        
+        // Ruft den dynamischen Offset von der lokalen Zeitzone ab (z.B. 1 für MEZ)
+        const localOffset = getOffsetHours(localTimezone); 
+        
+        // Ruft den dynamischen Offset der ausgewählten Zeitzone ab (z.B. 0 für London/GMT)
+        const selectedOffset = getOffsetHours(selectedTimezone);
+
+        if (selectedOffset === null || localOffset === null || selectedTimezone === 'wot' || selectedTimezone === 'astro') {
+            return ''; // Keine Differenzangabe für spezielle oder unbekannte Zonen
+        }
+
+        let diffHoursFloat = selectedOffset - localOffset;
+
+        // Führt eine Rundung auf die nächste Minute durch, um Fließkommafehler zu vermeiden
+        const totalDiffMinutes = Math.round(diffHoursFloat * 60);
+        
+        let diffHours = Math.trunc(totalDiffMinutes / 60);
+        let diffMins = Math.abs(totalDiffMinutes % 60);
+
+        if (diffHours === 0 && diffMins === 0) return 'Gleiche Zeit';
+
+        const absHours = Math.abs(diffHours);
+        const absMins = Math.abs(diffMins);
+        const sign = (diffHours < 0 || (diffHours === 0 && totalDiffMinutes < 0)) ? 'zurück' : 'voraus';
+
+        let diffParts = [];
+        if (absHours > 0) diffParts.push(`${absHours} Stunde${absHours === 1 ? '' : 'n'}`);
+        if (absMins > 0) diffParts.push(`${absMins} Minute${absMins === 1 ? '' : 'n'}`);
+
+        return `${diffParts.join(' und ')} ${sign}`;
+    }
+
+    function getUTCOffsetString(timezone) {
+      if (timezone === 'MEZ') return '(UTC+1)';
+      if (timezone === 'MESZ') return '(UTC+2)';
+      if (timezone === 'wot') return '<br>(Wahre Ortszeit)';
+      if (timezone === 'astro') return '(GMST)';
+      // Dynamische Abfrage für alle IANA-Zonen
+      try {
+        const offsetString = new Date().toLocaleTimeString('en-US', { timeZone: timezone, timeZoneName: 'shortOffset' });
+        const match = offsetString.match(/(GMT|UTC)([+-]\d{1,2}(:\d{2})?)/);
+        if (match) return `(UTC${match[2]})`;
+        // Wenn kein numerischer Offset, aber 'GMT' oder 'UTC' angezeigt wird
+        if (offsetString.includes('GMT') || offsetString.includes('UTC')) return '(UTC+0)';
+      } catch (e) { /* Fehler ignorieren */ }
+      return '';
+    }
+
+    function updateLocalClock() {
+      const now = new Date();
+      const timeStringDe = now.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
+      const dateStringDe = now.toLocaleDateString('de-DE', { weekday: 'long', day: '2-digit', month: '2-digit', year: 'numeric' });
+      
+      if (localClockDeElement) localClockDeElement.textContent = timeStringDe;
+      if (localDateDeElement) localDateDeElement.textContent = dateStringDe;
+    }
+    
+    // KORRIGIERTE FUNKTION: Entfernt die manuelle Berechnung für Pacific/Kiritimati
+    function updateTimeAndDate() {
+      const now = new Date();
+      let timeString = '', dateString = '';
+      const locale = 'de-DE';
+
+      if (selectedTimezone === 'wot') {
+        const longitude = 10.839; 
+        const now2 = new Date();
+        const start = new Date(now2.getFullYear(), 0, 0);
+        const diff = now2 - start;
+        const dayOfYear = Math.floor(diff / (1000 * 60 * 60 * 24));
+        const b = (2 * Math.PI * (dayOfYear - 81)) / 365;
+        const eot = 9.87 * Math.sin(2 * b) - 7.53 * Math.cos(b) - 1.5 * Math.sin(b);
+        const totalCorrectionMinutes = (longitude * 4) + eot;
+        const utcTimestamp = now.getTime() + (now.getTimezoneOffset() * 60000);
+        const wotDate = new Date(utcTimestamp + (totalCorrectionMinutes * 60000));
+        timeString = `${String(wotDate.getHours()).padStart(2, '0')}:${String(wotDate.getMinutes()).padStart(2, '0')}:${String(wotDate.getSeconds()).padStart(2, '0')}`;
+        dateString = now.toLocaleDateString(locale, { weekday: 'long', day: '2-digit', month: '2-digit', year: 'numeric' });
+      } else if (selectedTimezone === 'astro') {
+        const longitude = 10.839; // Stadtbergen
+        const jd = (now.getTime() / 86400000) + 2440587.5;
+        const d = jd - 2451545.0;
+        let gmst = (18.697374558 + 24.06570982441908 * d) % 24;
+        let lst = (gmst + (longitude / 15)) % 24; // Korrektur von Greenwich auf Stadtbergen
+        if (lst < 0) lst += 24;
+        const h = Math.floor(lst), m = Math.floor((lst - h) * 60), s = Math.floor(((lst - h) * 60 - m) * 60);
+        const f = (v) => String(v).padStart(2, '0');
+        timeString = `${f(h)}:${f(m)}:${f(s)}`;
+        dateString = now.toLocaleDateString(locale, { weekday: 'long', day: '2-digit', month: '2-digit', year: 'numeric' });
+      } else if (selectedTimezone === 'MEZ' || selectedTimezone === 'MESZ') {
+        const offsetHours = selectedTimezone === 'MEZ' ? 1 : 2;
+        const date = new Date(now.getTime() + (offsetHours * 60 * 60 * 1000));
+        timeString = `${String(date.getUTCHours()).padStart(2, '0')}:${String(date.getUTCMinutes()).padStart(2, '0')}:${String(date.getUTCSeconds()).padStart(2, '0')}`;
+        dateString = date.toLocaleDateString(locale, { weekday: 'long', day: '2-digit', month: '2-digit', year: 'numeric', timeZone: 'Etc/UTC' });
+      } else {
+        timeString = now.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit', second: '2-digit', timeZone: selectedTimezone, hour12: false });
+        dateString = now.toLocaleDateString(locale, { weekday: 'long', day: '2-digit', month: '2-digit', year: 'numeric', timeZone: selectedTimezone });
+      }
+
+      if (selectedCityTitleElement) selectedCityTitleElement.textContent = selectedCityName;
+      if (clockElement) clockElement.innerHTML = timeString;
+      if (dateElement) dateElement.textContent = dateString;
+      
+      const diffText = calculateTimeDifference(); 
+      const utcOffsetText = getUTCOffsetString(selectedTimezone);
+
+      if (timeDifferenceElement) timeDifferenceElement.innerHTML = `${diffText} ${utcOffsetText}`;
+    }
+    
+    // Event-Listener
+    timezoneSelectorButton.addEventListener('click', () => {
+        citySearchInput.value = '';
+        createModalButtons();
+        populateSearchableCitiesList();
+        timezoneModal.classList.remove('hidden');
+        citySearchInput.focus();
+    });
+    
+    citySearchInput.addEventListener('input', (e) => {
+        const val = e.target.value.toLowerCase();
+        if (cityToTimezoneMap[val]) {
+            saveTimezone(cityToTimezoneMap[val], e.target.value);
+            updateTimeAndDate();
+            setTimeout(() => { 
+                timezoneModal.classList.add('hidden'); 
+                citySearchInput.value = ''; 
+            }, 300);
+        }
+    });
+
+    document.getElementById('close-modal').addEventListener('click', () => timezoneModal.classList.add('hidden'));
+
+    modalOptionsContainer.addEventListener('click', (e) => {
+        const option = e.target.closest('.modal-option');
+        if (option) {
+            // Entfernt das Sternchen, bevor der Name gespeichert wird
+            saveTimezone(option.dataset.timezone, option.dataset.cityName); 
+            updateTimeAndDate();
+            timezoneModal.classList.add('hidden');
+        }
+    });
+
+    // Initialisierung
+    setInterval(() => {
+        updateLocalClock();
+        updateTimeAndDate();
+    }, 1000);
+    updateLocalClock();
+    updateTimeAndDate();
+  </script>
+
+</body>
+</html>
