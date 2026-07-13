@@ -701,13 +701,21 @@
     }
     
     function populateSearchableCitiesList() {
-        searchableCitiesList.innerHTML = '';
-        Object.keys(cityToTimezoneMap).sort().forEach(cityKey => {
-            const option = document.createElement('option');
+    searchableCitiesList.innerHTML = '';
+    Object.keys(cityToTimezoneMap).sort().forEach(cityKey => {
+        const option = document.createElement('option');
+        
+        // Wenn der Eintrag mit "utc" beginnt, machen wir das "UTC" komplett groß
+        if (cityKey.startsWith('utc')) {
+            option.value = 'UTC' + cityKey.slice(3);
+        } else {
+            // Für alle normalen Städte bleibt die bisherige Schreibweise
             option.value = cityKey.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
-            searchableCitiesList.appendChild(option);
-        });
-    }
+        }
+        
+        searchableCitiesList.appendChild(option);
+    });
+}
 
     function saveTimezone(timezone, cityName) {
         localStorage.setItem('selectedTimezone', timezone);
