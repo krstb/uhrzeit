@@ -117,11 +117,12 @@
 
     // Datenbank mit Hauptstädten und Großstädten sowie Ländern 
     const cityToTimezoneMap = {
-    'abu dhabi': 'Asia/Dubai',
+   
+	'abu dhabi': 'Asia/Dubai',
+	'antwerpen': 'Europe/Brussels',
     'accra': 'Africa/Accra',
     'adelaide': 'Australia/Adelaide',
     'afghanistan': 'Asia/Kabul',
-    'ägypten': 'Africa/Cairo',
     'albanien': 'Europe/Tirane',
     'alexandria': 'Africa/Cairo',
     'algerien': 'Africa/Algiers',
@@ -136,7 +137,6 @@
     'antananarivo': 'Indian/Antananarivo',
     'antigua und barbuda': 'America/Antigua',
     'apia': 'Pacific/Apia',
-    'äquatorialguinea': 'Africa/Malabo',
     'argentinien': 'America/Argentina/Buenos_Aires',
     'armenien': 'Asia/Yerevan',
     'aschgabat': 'Asia/Ashgabat',
@@ -145,7 +145,6 @@
     'astana': 'Asia/Almaty',
     'asuncion': 'America/Asuncion',
     'athen': 'Europe/Athens',
-    'äthiopien': 'Africa/Addis_Ababa',
     'atlanta': 'America/New_York',
     'auckland': 'Pacific/Auckland',
     'augsburg': 'Europe/Berlin',
@@ -180,7 +179,7 @@
     'birmingham': 'Europe/London',
     'bischkek': 'Asia/Bishkek',
     'bissau': 'Africa/Bissau',
-    'bogotá': 'America/Bogota',
+    'bogota': 'America/Bogota',
     'bolivien': 'America/La_Paz',
     'bosnien und herzegowina': 'Europe/Sarajevo',
     'boston': 'America/New_York',
@@ -216,10 +215,13 @@
     'china': 'Asia/Shanghai',
     'chisinau': 'Europe/Chisinau',
     'chongqing': 'Asia/Shanghai',
+    'chongqing': 'Asia/Shanghai',
+    'christchurch': 'Pacific/Auckland',
     'colombo': 'Asia/Colombo',
     'conakry': 'Africa/Conakry',
     'costa rica': 'America/Costa_Rica',
     'dakar': 'Africa/Dakar',
+    'dallas': 'America/Chicago',
     'damaskus': 'Asia/Damascus',
     'darwin': 'Australia/Darwin',
     'detroit': 'America/New_York',
@@ -264,11 +266,11 @@
     'grönland': 'America/Nuuk',
     'guadalajara': 'America/Mexico_City',
     'guangzhou': 'Asia/Shanghai',
-    'guatemala-stadt': 'America/Guatemala',
     'guatemala': 'America/Guatemala',
+    'guatemala-stadt': 'America/Guatemala',
     'guayaquil': 'America/Guayaquil',
-    'guinea-bissau': 'Africa/Bissau',
     'guinea': 'Africa/Conakry',
+    'guinea-bissau': 'Africa/Bissau',
     'guyana': 'America/Guyana',
     'haiti': 'America/Port-au-Prince',
     'hamburg': 'Europe/Berlin',
@@ -333,17 +335,18 @@
     'kinshasa': 'Africa/Kinshasa',
     'kiribati ost': 'Pacific/Kiritimati',
     'kolkata': 'Asia/Kolkata',
-    'köln': 'Europe/Berlin',
     'kolumbien': 'America/Bogota',
     'komoren': 'Indian/Comoro',
     'kopenhagen': 'Europe/Copenhagen',
     'kourou': 'America/Cayenne',
+    'krakau': 'Europe/Warsaw',
     'kroatien': 'Europe/Zagreb',
     'kuala lumpur': 'Asia/Kuala_Lumpur',
     'kuba': 'America/Havana',
-    'kuwait-stadt': 'Asia/Kuwait',
     'kuwait': 'Asia/Kuwait',
+    'kuwait-stadt': 'Asia/Kuwait',
     'kyoto': 'Asia/Tokyo',
+    'köln': 'Europe/Berlin',
     'la paz': 'America/La_Paz',
     'lagos': 'Africa/Lagos',
     'laos': 'Asia/Vientiane',
@@ -400,8 +403,8 @@
     'medellin': 'America/Bogota',
     'mekka': 'Asia/Riyadh',
     'melbourne': 'Australia/Melbourne',
-    'mexiko-stadt': 'America/Mexico_City',
     'mexiko': 'America/Mexico_City',
+    'mexiko-stadt': 'America/Mexico_City',
     'miami': 'America/New_York',
     'mikronesien': 'Pacific/Pohnpei',
     'minsk': 'Europe/Minsk',
@@ -417,8 +420,8 @@
     'mosambik': 'Africa/Maputo',
     'moskau': 'Europe/Moscow',
     'mumbai': 'Asia/Kolkata',
-    'münchen': 'Europe/Berlin',
     'myanmar': 'Asia/Yangon',
+    'münchen': 'Europe/Berlin',
     'n djamena': 'Africa/Ndjamena',
     'nagoya': 'Asia/Tokyo',
     'nairobi': 'Africa/Nairobi',
@@ -447,14 +450,13 @@
     'oman': 'Asia/Muscat',
     'osaka': 'Asia/Tokyo',
     'oslo': 'Europe/Oslo',
-    'österreich': 'Europe/Vienna',
     'osttimor': 'Asia/Dili',
     'ottawa': 'America/Toronto',
     'ouagadougou': 'Africa/Ouagadougou',
     'pakistan': 'Asia/Karachi',
-    'palästina': 'Asia/Gaza',
     'palikir': 'Pacific/Pohnpei',
     'palma': 'Europe/Madrid',
+    'palästina': 'Asia/Gaza',
     'panama-stadt': 'America/Panama',
     'paraguay': 'America/Asuncion',
     'paramaribo': 'America/Paramaribo',
@@ -463,6 +465,7 @@
     'peking': 'Asia/Shanghai',
     'perth': 'Australia/Perth',
     'peru': 'America/Lima',
+    'philadelphia': 'America/New_York',
     'philippinen': 'Asia/Manila',
     'phnom penh': 'Asia/Phnom_Penh',
     'phoenix': 'America/Phoenix',
@@ -489,6 +492,7 @@
     'rio de janeiro': 'America/Sao_Paulo',
     'rom': 'Europe/Rome',
     'roseau': 'America/Dominica',
+    'rotterdam': 'Europe/Amsterdam',
     'ruanda': 'Africa/Kigali',
     'rumänien': 'Europe/Bucharest',
     'russland anadyr': 'Asia/Anadyr',
@@ -502,18 +506,22 @@
     'russland vladivostok': 'Asia/Vladivostok',
     'russland yakutsk': 'Asia/Yakutsk',
     'russland yekaterinburg': 'Asia/Yekaterinburg',
+    'saigon': 'Asia/Ho_Chi_Minh',
     'sambia': 'Africa/Lusaka',
     'samoa': 'Pacific/Pago_Pago',
+    'san diego': 'America/Los_Angeles',
     'san francisco': 'America/Los_Angeles',
     'san jose': 'America/Costa_Rica',
     'san marino': 'Europe/San_Marino',
     'san salvador': 'America/El_Salvador',
     'sanaa': 'Asia/Aden',
     'sankt petersburg': 'Europe/Moscow',
+    'santiago de chile': 'America/Santiago',
     'santiago': 'America/Santiago',
     'santo domingo': 'America/Santo_Domingo',
     'sao paulo': 'America/Sao_Paulo',
     'sao tome': 'Africa/Sao_Tome',
+    'sapporo': 'Asia/Tokyo',
     'sarajevo': 'Europe/Sarajevo',
     'saudi-arabien': 'Asia/Riyadh',
     'schweden': 'Europe/Stockholm',
@@ -539,14 +547,14 @@
     'st. john': 'America/Antigua',
     'stadtbergen': 'Europe/Berlin',
     'stockholm': 'Europe/Stockholm',
-    'südafrika': 'Africa/Johannesburg',
     'sudan': 'Africa/Khartoum',
-    'südkorea': 'Asia/Seoul',
-    'südsudan': 'Africa/Juba',
     'surat': 'Asia/Kolkata',
     'suva': 'Pacific/Fiji',
     'sydney': 'Australia/Sydney',
     'syrien': 'Asia/Damascus',
+    'südafrika': 'Africa/Johannesburg',
+    'südkorea': 'Asia/Seoul',
+    'südsudan': 'Africa/Juba',
     'tadschikistan': 'Asia/Dushanbe',
     'taipeh': 'Asia/Taipei',
     'taiwan': 'Asia/Taipei',
@@ -559,19 +567,22 @@
     'teheran': 'Asia/Tehran',
     'tel aviv': 'Asia/Jerusalem',
     'thailand': 'Asia/Bangkok',
+    'thessaloniki': 'Europe/Athens',
     'thimphu': 'Asia/Thimphu',
+    'tianjin': 'Asia/Shanghai',
     'tiflis': 'Asia/Tbilisi',
     'timor-leste': 'Asia/Dili',
     'tirana': 'Europe/Tirana',
     'togo': 'Africa/Lome',
     'tokio': 'Asia/Tokyo',
     'toronto': 'America/Toronto',
+    'toulouse': 'Europe/Paris',
     'tripolis': 'Africa/Tripoli',
     'tschechien': 'Europe/Prague',
     'tunesien': 'Africa/Tunis',
-    'türkei': 'Europe/Istanbul',
     'turkmenistan': 'Asia/Ashgabat',
     'tuvalu': 'Pacific/Funafuti',
+    'türkei': 'Europe/Istanbul',
     'uganda': 'Africa/Kampala',
     'ukraine': 'Europe/Kyiv',
     'ulaanbaatar': 'Asia/Ulaanbaatar',
@@ -607,8 +618,14 @@
     'yaren': 'Pacific/Nauru',
     'yokohama': 'Asia/Tokyo',
     'zagreb': 'Europe/Zagreb',
-    'zürich': 'Europe/Zurich',
     'zypern': 'Asia/Nicosia',
+    'zürich': 'Europe/Zurich',
+    'ägypten': 'Africa/Cairo',
+    'äquatorialguinea': 'Africa/Malabo',
+    'äthiopien': 'Africa/Addis_Ababa',
+    'österreich': 'Europe/Vienna',
+    
+	
     'utc-01': 'Etc/GMT+1',
     'utc-02': 'Etc/GMT+2',
     'utc-03': 'Etc/GMT+3',
@@ -623,7 +640,6 @@
     'utc-12': 'Etc/GMT+12',
     'utc-13': 'Etc/GMT+13',
     'utc-14': 'Etc/GMT+14',
-      
     'utc+01': 'Etc/GMT-1',
     'utc+02': 'Etc/GMT-2',
     'utc+03': 'Etc/GMT-3',
@@ -648,10 +664,13 @@
         { name: 'Amerik. Samoa *', timezone: 'Pacific/Pago_Pago' }, 
          ];
     const specialTimezones = [
-        { name: 'Astrozeit (Stadtb.)', timezone: 'astro' }, { name: 'MEZ', timezone: 'MEZ' },
-        { name: 'MESZ', timezone: 'MESZ' }, { name: 'UTC / GMT', timezone: 'Etc/UTC' },
+        { name: 'Astrozeit (Stadtb.)', timezone: 'astro' },
+		{ name: 'MEZ', timezone: 'MEZ' },
+        { name: 'MESZ', timezone: 'MESZ' },
+		{ name: 'UTC / GMT', timezone: 'Etc/UTC' },
         { name: 'WOZ (Stadtb.)', timezone: 'wot' },
-    ];
+		{ name: 'Marszeit', timezone: 'mars' },
+	];
     
     geographicTimezones.sort((a, b) => a.name.localeCompare(b.name));
     specialTimezones.sort((a, b) => a.name.localeCompare(b.name));
@@ -805,7 +824,7 @@
         // Ruft den dynamischen Offset der ausgewählten Zeitzone ab (z.B. 0 für London/GMT)
         const selectedOffset = getOffsetHours(selectedTimezone);
 
-        if (selectedOffset === null || localOffset === null || selectedTimezone === 'wot' || selectedTimezone === 'astro') {
+        if (selectedOffset === null || localOffset === null || ['wot', 'astro', 'mars'].includes(selectedTimezone)) {
             return ''; // Keine Differenzangabe für spezielle oder unbekannte Zonen
         }
 
@@ -833,6 +852,7 @@
     function getUTCOffsetString(timezone) {
       if (timezone === 'MEZ') return '(UTC+1)';
       if (timezone === 'MESZ') return '(UTC+2)';
+	  if (timezone === 'mars') return '(MTC)';
       if (timezone === 'wot') return '<br>(Wahre Ortszeit)';
       if (timezone === 'astro') return '(GMST)';
       // Dynamische Abfrage für alle IANA-Zonen
@@ -885,6 +905,16 @@
         const f = (v) => String(v).padStart(2, '0');
         timeString = `${f(h)}:${f(m)}:${f(s)}`;
         dateString = now.toLocaleDateString(locale, { weekday: 'long', day: '2-digit', month: '2-digit', year: 'numeric' });
+      } else if (selectedTimezone === 'mars') { // <-- HIER GENAU EINGEFÜGT
+        const jd = (now.getTime() / 86400000) + 2440587.5;
+        const msd = (jd - 2405522.0028779) / 1.027491252;
+        const marsMillis = Math.floor((msd % 1) * 86400000);
+        const h = Math.floor(marsMillis / 3600000);
+        const m = Math.floor((marsMillis % 3600000) / 60000);
+        const s = Math.floor((marsMillis % 60000) / 1000);
+        const pad = (v) => String(v).padStart(2, '0');
+        timeString = `${pad(h)}:${pad(m)}:${pad(s)}`;
+        dateString = `Mars Sol Date: ${Math.floor(msd)}`;
       } else if (selectedTimezone === 'MEZ' || selectedTimezone === 'MESZ') {
         const offsetHours = selectedTimezone === 'MEZ' ? 1 : 2;
         const date = new Date(now.getTime() + (offsetHours * 60 * 60 * 1000));
