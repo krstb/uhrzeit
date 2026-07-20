@@ -1,4 +1,4 @@
-const CACHE_NAME = 'uhrzeit-v1'; 
+const CACHE_NAME = 'uhrzeit-v2'; 
 const ASSETS = [
   'index.html',
   'manifest.json',
